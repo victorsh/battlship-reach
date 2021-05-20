@@ -1,0 +1,188 @@
+/*
+  1. Deployer sets the wager
+  2. Attacher accepts or rejects the wager.
+  3. Attacher selects where to place ships. Deployer does not know.
+  4. Deployer selects where to place ships. Attacher does not know.
+  5. Deployer and Attacher take turns guessing where the opponents battleships are.
+  6. First to sink opposing battleships wins.
+  7. Funds are transferred to winner.
+*/
+
+/*
+  1. Deployer sets the wager
+  2. Attacher accepts or rejects the wager.
+  3. Attacher selects where to place ships. Deployer does not know.
+  4. Deployer selects where to place ships. Attacher does not know.
+  5. Deployer and Attacher guess their opponents peice ship locations until all ships are found.
+  6. The number of turns taken is then used to determine the winner.
+  7. Funds are transferred to winner.
+*/
+
+/*
+  1. A & B Select their ship locations.
+  2. Locations for each are made into commitments.
+  3. A & B have X number of guesses out of Y grid selections.
+  4. Winner is determined by whoever guesses the most correct ship locations.
+  5. If a Draw occurs, the game starts over at (1).
+*/
+
+/*
+  There can be a DRAW
+*/
+
+'reach 0.1';
+
+const BOARD_WIDTH = 4;
+const BOARD_HEIGHT = 4;
+const ACCEPT_WAGER_DEADLINE = 10;
+const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
+
+const winner = (countA, countB) => {
+  if (countA > countB) {
+    return A_WINS;
+  } else if (countB > countA) {
+    return B_WINS;
+  } else {
+    return DRAW;
+  }
+}
+
+assert(winner(1, 0) == A_WINS);
+assert(winner(0, 1) == B_WINS);
+assert(winner(1, 1) == DRAW);
+
+const player = {
+  ...hasRandom,
+  wager: UInt,
+  seeOutcome: Fun([UInt], Null),
+  informTimeout: Fun([], Null),
+  board: Array(Object({x: UInt, y: UInt}), BOARD_WIDTH * BOARD_HEIGHT),
+  getShips: Fun([], Array(UInt, 32)),
+  selectTargets: Fun([], Array(UInt, 32))
+};
+const deployer = {
+  ...player,
+  wager: UInt
+};
+const attacher = {
+  ...player,
+  acceptWager: Fun([UInt], Null)
+};
+
+export const main = Reach.App(
+  {},
+  [Participant('deployer', deployer), Participant('attacher', attacher)],
+  (A, B) => {
+    const informTimeout = () => {
+      each([A, B], () => {
+        interact.informTimeout();
+      });
+    };
+
+
+    // A declassifies and submits wager
+    A.only(() => {
+      const wager = declassify(interact.wager);
+    });
+    A.publish(wager).pay(wager);
+    commit();
+
+    // B accepts wager given an amount of time to accept
+    B.only(() => {
+      interact.acceptWager(wager);
+    });
+    B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+
+
+    // -> ON DRAW LOOP STARTS HERE
+    var outcome = DRAW;
+    invariant(balance() == 2 * wager && isOutcome(outcome))
+    while (outcome == DRAW) {
+      commit();
+
+      // A selects locations for ships and stores it in contract private.
+      A.only(() => {
+        const _shipsA = interact.getShips();
+        const [_commitA, _saltA] = makeCommitment(interact, _shipsA);
+        const commitA = declassify(_commitA);
+      });
+      A.publish(commitA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
+      commit();
+      // B should not know the location of A's ships
+      // B selects locations for ships and stores them in contract public
+      unknowable(B, A(_shipsA, _saltA));
+      B.only(() => {
+        const _shipsB = interact.getShips();
+        const [_commitB, _saltB] = makeCommitment(interact, _shipsB);
+        const commitB = declassify(_commitB);
+      });
+      B.publish(commitB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+      commit();
+      // A should not know the location of B's ships
+      unknowable(A, B(_shipsB, _saltB));
+
+
+      // Take Guesses A
+      A.only(() => {
+        const guessesA = declassify(interact.selectTargets())
+      });
+      A.publish(guessesA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
+      commit();
+      // Take Guesses B
+      B.only(() => {
+        const guessesB = declassify(interact.selectTargets())
+      });
+      B.publish(guessesB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+      commit();
+
+
+
+      // A decrypts and stores ships locations on contract public
+      A.only(() => {
+        const [saltA, shipsA] = declassify([_saltA, _shipsA]);
+      });
+      A.publish(saltA, shipsA);
+      checkCommitment(commitA, saltA, shipsA);
+      commit();
+      // A decrypts and stores ships locations on contract public
+      B.only(() => {
+        const [saltB, shipsB] = declassify([_saltB, _shipsB]);
+      });
+      B.publish(saltB, shipsB);
+      checkCommitment(commitB, saltB, shipsB);
+
+      // winner = max(ships A cmpr guesses B, ships B cmpr guesses A)
+      var [ x, countA, countB ] = [ 0, 0, 0 ];
+      invariant(true);
+      while(x < 32) {
+
+        [ x, countA, countB ] = [
+          x + 1,
+          ieq(shipsB[x], guessesA[x]) ? countA + 1 : countA,
+          ieq(shipsA[x], guessesB[x]) ? countB + 1 : countB
+        ];
+
+        continue;
+      }
+
+      outcome = winner(countA, countB);
+
+      continue;
+    }
+
+    const [forA, forB] =
+      outcome == A_WINS ? [2, 0] :
+      outcome == B_WINS ? [0, 2] :
+      [1, 1];
+
+    transfer(forA * wager).to(A);
+    transfer(forB * wager).to(B);
+    commit();
+
+    each([A, B], () => {
+      interact.seeOutcome(outcome);
+    });
+
+    exit();
+  }
+)
