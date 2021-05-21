@@ -154,6 +154,8 @@ export const main = Reach.App(
       var [ x, countA, countB ] = [ 0, 0, 0 ];
       invariant(balance() == wager * 2);
       while(x < 32) {
+        commit();
+
         [ x, countA, countB ] = [
           x + 1,
           ieq(shipsB[x], guessesA[x]) ? countA + 1 : countA,
