@@ -93,7 +93,6 @@ export const main = Reach.App(
     });
     B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
 
-
     // -> ON DRAW LOOP STARTS HERE
     var outcome = DRAW;
     invariant(balance() == 2 * wager && isOutcome(outcome))
@@ -110,7 +109,7 @@ export const main = Reach.App(
       commit();
       // B should not know the location of A's ships
       // B selects locations for ships and stores them in contract public
-      unknowable(B, A(_shipsA, _saltA));
+      // unknowable(B, A(_shipsA, _saltA));
       B.only(() => {
         const _shipsB = interact.getShips();
         const [_commitB, _saltB] = makeCommitment(interact, _shipsB);
@@ -119,7 +118,7 @@ export const main = Reach.App(
       B.publish(commitB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
       commit();
       // A should not know the location of B's ships
-      unknowable(A, B(_shipsB, _saltB));
+      // unknowable(A, B(_shipsB, _saltB));
 
 
       // Take Guesses A
@@ -153,9 +152,8 @@ export const main = Reach.App(
 
       // winner = max(ships A cmpr guesses B, ships B cmpr guesses A)
       var [ x, countA, countB ] = [ 0, 0, 0 ];
-      invariant(true);
+      invariant(balance() == wager * 2);
       while(x < 32) {
-
         [ x, countA, countB ] = [
           x + 1,
           ieq(shipsB[x], guessesA[x]) ? countA + 1 : countA,
@@ -166,17 +164,12 @@ export const main = Reach.App(
       }
 
       outcome = winner(countA, countB);
-
+      // outcome = A_WINS;
       continue;
     }
 
-    const [forA, forB] =
-      outcome == A_WINS ? [2, 0] :
-      outcome == B_WINS ? [0, 2] :
-      [1, 1];
-
-    transfer(forA * wager).to(A);
-    transfer(forB * wager).to(B);
+    assert(outcome == A_WINS || outcome == B_WINS);
+    transfer(2 * wager).to(outcome == A_WINS ? A : B);
     commit();
 
     each([A, B], () => {
