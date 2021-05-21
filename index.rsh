@@ -34,6 +34,7 @@
 
 const BOARD_WIDTH = 4;
 const BOARD_HEIGHT = 4;
+const GRID_SIZE = 16;
 const ACCEPT_WAGER_DEADLINE = 10;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
@@ -56,9 +57,8 @@ const player = {
   wager: UInt,
   seeOutcome: Fun([UInt], Null),
   informTimeout: Fun([], Null),
-  board: Array(Object({x: UInt, y: UInt}), BOARD_WIDTH * BOARD_HEIGHT),
-  getShips: Fun([], Array(UInt, 32)),
-  selectTargets: Fun([], Array(UInt, 32))
+  getShips: Fun([], Array(UInt, GRID_SIZE)),
+  selectTargets: Fun([], Array(UInt, GRID_SIZE))
 };
 const deployer = {
   ...player,
@@ -153,8 +153,9 @@ export const main = Reach.App(
       // winner = max(ships A cmpr guesses B, ships B cmpr guesses A)
       var [ x, countA, countB ] = [ 0, 0, 0 ];
       invariant(balance() == wager * 2);
-      while(x < 32) {
+      while(x < GRID_SIZE) {
         commit();
+        Anybody.publish();
 
         [ x, countA, countB ] = [
           x + 1,

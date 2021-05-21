@@ -18,6 +18,8 @@ import * as backend from './build/index.main.mjs';
   const ctcDeployer = accDeployer.deploy(backend);
   const ctcAttacher = accAttacher.attach(backend, ctcDeployer.getInfo());
 
+  const GRID_SIZE = 16;
+
   const Player = (Who) => ({
     ...stdlib.hasRandom,
     seeOutcome: (outcome) => {
@@ -31,10 +33,11 @@ import * as backend from './build/index.main.mjs';
       for (let i = 0; i < 32; i++) {
         board.push(Math.random() > 0.5 ? 1 : 0)
       }
+      console.log(`${Who} sets ships...`)
       console.log(board)
       return board
     },
-    getLocations: () => {
+    selectTargets: () => {
       const board = [];
       let guess_count = 0;
       for (let i = 0; i < 32; i++) {
@@ -45,6 +48,7 @@ import * as backend from './build/index.main.mjs';
           board.push(0);
         }
       }
+      console.log(`${Who} guesses...`)
       console.log(board)
       return board
     }
