@@ -30,7 +30,7 @@ import * as backend from './build/index.main.mjs';
     },
     getShips: () => {
       const board = [];
-      for (let i = 0; i < 32; i++) {
+      for (let i = 0; i < GRID_SIZE; i++) {
         board.push(Math.random() > 0.5 ? 1 : 0)
       }
       console.log(`${Who} sets ships...`)
@@ -40,8 +40,8 @@ import * as backend from './build/index.main.mjs';
     selectTargets: () => {
       const board = [];
       let guess_count = 0;
-      for (let i = 0; i < 32; i++) {
-        if (guess_count < 16 && Math.random() > 0.5) {
+      for (let i = 0; i < GRID_SIZE; i++) {
+        if (guess_count < GRID_SIZE / 2 && Math.random() > 0.5) {
           board.push(1);
           guess_count++;
         } else {
