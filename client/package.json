@@ -13,6 +13,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "resolutions": {
+    "@babel/runtime": "^7.14.0"
+  },
   "dependencies": {
     "@reach-sh/stdlib": "^0.1.2-rc.52",
     "react": "^17.0.2",

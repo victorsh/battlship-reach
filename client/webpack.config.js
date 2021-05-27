@@ -20,7 +20,7 @@ module.exports = {
     watchContentBase: true
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.mjs', '.json', '.wasm']
+    extensions: ['.js', '.ts', '.mjs', '.json', '.wasm']
   },
   module: {
     rules: [
@@ -32,7 +32,7 @@ module.exports = {
       {
         test: /\.m?js/,
         resolve: {
-          fullySpecified: true
+          fullySpecified: false
         }
       },
       {
