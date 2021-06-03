@@ -18,6 +18,8 @@ Battleship written in Reach and React running on the Algorand Blockchain. This p
 `REACH_CONNECTOR_MODE=ALGO ./reach react`
 `docker-compose run algorand-devnet` || `REACH_CONNECTOR_MODE=ALGO reach devnet`
 `cd cra-client && npm start`
+`docker kill $(docker ps -q) && docker rm $(docker ps -qa)`
+`docker rm $(docker ps -qa)`
 
 #### Sources
 - A single participant example showcasing [array_groups](https://github.com/reach-sh/reach-lang/blob/8f41a2ae17220041ba365274dd32ae7c96b11f2e/hs/test-examples/features/array_groups.rsh)
