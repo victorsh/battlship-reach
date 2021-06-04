@@ -2,7 +2,6 @@ import React from 'react';
 import Description from './components/Description'
 
 import { loadStdlib } from '@reach-sh/stdlib';
-
 import * as backend from './backend/index.main.mjs';
 
 import './style/App.css';
@@ -37,13 +36,30 @@ class App extends React.Component {
     }
   }
 
+  async componentDidMount() {
+    window.addEventListener('timeout', this.timeoutEvt);
+    window.addEventListener('accept-wager', this.acceptWagerEvt);
+    window.addEventListener('submit-ships', this.submitShipsEvt);
+    window.addEventListener('submit-guesses', this.submitGuessesEvt);
+    window.addEventListener('outcome', this.outcomeEvt);
+
+    const reach = await loadStdlib('ALGO');
+    const { standardUnit } = reach;
+    await reach.setWaitPort(false);
+    this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
+  }
+
+  async componentWillUnmount() {
+    window.removeEventListener('timeout', this.timeoutEvt);
+    window.removeEventListener('accept-wager', this.acceptWagerEvt)
+    window.removeEventListener('submit-ships', this.submitShipsEvt)
+    window.removeEventListener('submit-guesses', this.submitGuessesEvt)
+    window.removeEventListener('outcome', this.outcomeEvt)
+  }
+
   timeoutEvt = (e) => {
     console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
-    if (this.state.player === 'deployer') {
-      this.setState({status: 'deployer-start'})
-    } else if (this.state.player === 'attacher') {
-      this.setState({status: 'attacher-start'})
-    }
+    this.setState({status: 'connected'});
   }
   acceptWagerEvt = (e) => {
     console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${e.wager}`);
@@ -72,26 +88,6 @@ class App extends React.Component {
   outcomeEvt = (e) => {
     console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}`);
     this.setState({status: 'outcome', outcome: e.outcome})
-  }
-
-  async componentDidMount() {
-    const reach = await loadStdlib('ALGO');
-    const { standardUnit } = reach;
-    this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
-
-    window.addEventListener('timeout', this.timeoutEvt);
-    window.addEventListener('accept-wager', this.acceptWagerEvt);
-    window.addEventListener('submit-ships', this.submitShipsEvt);
-    window.addEventListener('submit-guesses', this.submitGuessesEvt);
-    window.addEventListener('outcome', this.outcomeEvt);
-  }
-
-  async componentWillUnmount() {
-    window.removeEventListener('timeout', this.timeoutEvt);
-    window.removeEventListener('accept-wager', this.acceptWagerEvt)
-    window.removeEventListener('submit-ships', this.submitShipsEvt)
-    window.removeEventListener('submit-guesses', this.submitGuessesEvt)
-    window.removeEventListener('outcome', this.outcomeEvt)
   }
 
   connectAccount = async () => {
@@ -192,7 +188,7 @@ class App extends React.Component {
       console.log(`${Who} observed a timeout`);
       window.dispatchEvent(new Event('timeout', {bubbles: true, cancelable: false }));
     },
-    getShips: async () => {
+    selectShips: async () => {
       console.log(`${Who} sets ships...`)
       return await new Promise(resolveSelectP => {
         const evt = new Event('submit-ships', {bubbles: true, cancelable: false});
@@ -201,7 +197,7 @@ class App extends React.Component {
         window.dispatchEvent(evt);
       })
     },
-    selectTargets: async () => {
+    guessShips: async () => {
       console.log(`${Who} guesses...`)
       const ships = await new Promise(resolveGuessP => {
         const evt = new Event('submit-guess', {bubbles: true, cancelable: false});
@@ -278,13 +274,13 @@ class App extends React.Component {
         )
         break;
       case 'deployer-start':
-        console.log('deployer-start');
+        console.log('case deployer-start');
         wallet = (
           <div className='wallet-container'>
             {balance}
             <div styel={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
               <input type="text" style={{width: '10vh'}} onChange={(e) => {this.setState({wager: e.target.value})}} placeholder="Bet Amount" />
-              <button onClick={this.deployAndWager}>Place Wager</button>
+              <button onClick={() => this.deployAndWager()}>Place Wager</button>
             </div>
           </div>
         )

@@ -28,7 +28,7 @@ import * as backend from './build/index.main.mjs';
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);
     },
-    getShips: () => {
+    selectShips: () => {
       const board = [];
       for (let i = 0; i < GRID_SIZE; i++) {
         board.push(Math.random() > 0.5 ? 1 : 0)
@@ -37,7 +37,7 @@ import * as backend from './build/index.main.mjs';
       console.log(board)
       return board
     },
-    selectTargets: () => {
+    guessShips: () => {
       const board = [];
       let guess_count = 0;
       for (let i = 0; i < GRID_SIZE; i++) {
