@@ -126,7 +126,7 @@ export const main = Reach.App(
       commit();
       // Take Guesses B
       B.only(() => {
-        const guessesB = declassify(interact.guessShips())
+        const guessesB = declassify(interact.guessShips());
       });
       B.publish(guessesB).timeout(DEADLINE, () => closeTo(A, informTimeout));
       commit();
