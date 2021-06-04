@@ -2,14 +2,13 @@ import React from 'react'
 import '../style/grid.css'
 
 class Grid extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-
   handleClick = (e) => {
     e.preventDefault();
     console.log(e.target.dataset.mssg)
     this.props.guessShips(e.target.dataset.mssg)
+    this.state = {
+      style: 'unclicked'
+    }
   }
 
   render() {
