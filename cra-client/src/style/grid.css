@@ -17,10 +17,17 @@
   width: 10em;
   height: 10em;
   justify-content: center;
-  background: #789;
   border: 1px solid black;
 }
 
 .grid-col:hover {
   background: red;
+}
+
+.grid-col-unselected {
+  background: #789;
+}
+
+.grid-col-selected {
+  background: rgb(5, 165, 45);
 }

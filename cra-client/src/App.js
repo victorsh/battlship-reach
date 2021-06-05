@@ -6,7 +6,6 @@ import * as backend from './backend/index.main.mjs';
 
 import './style/App.css';
 
-import battleship from './images/battleship.png';
 import algorandLogo from './images/algorand-algo-logo.svg';
 import reachLogoVertical from './images/reach-vertical.svg';
 
@@ -21,42 +20,47 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      // Player State
       account: null,
       address: null,
+      balance: 0,
+      player: null,
+      // Game State
+      status: 'starting',
       fundAmount: '10',
       wager: '3',
-      balance: 0,
       attachInfo: null,
       acceptTerms: null,
-      outcome: null,
       selectedShips: new Array(16).fill(0),
       guessedShips: new Array(16).fill(0),
-      status: 'starting',
-      player: null
+      outcome: null,
     }
   }
 
   async componentDidMount() {
     window.addEventListener('timeout', this.timeoutEvt);
     window.addEventListener('accept-wager', this.acceptWagerEvt);
-    window.addEventListener('submit-ships', this.submitShipsEvt);
+    window.addEventListener('submit-selections', this.submitShipsEvt);
     window.addEventListener('submit-guesses', this.submitGuessesEvt);
     window.addEventListener('outcome', this.outcomeEvt);
 
     const reach = await loadStdlib('ALGO');
     const { standardUnit } = reach;
-    await reach.setWaitPort(false);
+    try { await reach.setWaitPort(false);
+    } catch (e) { console.log(e); }
+
     this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
   }
 
   async componentWillUnmount() {
     window.removeEventListener('timeout', this.timeoutEvt);
     window.removeEventListener('accept-wager', this.acceptWagerEvt)
-    window.removeEventListener('submit-ships', this.submitShipsEvt)
+    window.removeEventListener('submit-selections', this.submitShipsEvt)
     window.removeEventListener('submit-guesses', this.submitGuessesEvt)
     window.removeEventListener('outcome', this.outcomeEvt)
   }
 
+  /* Event Functions */
   timeoutEvt = (e) => {
     console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
     this.setState({status: 'connected'});
@@ -66,7 +70,7 @@ class App extends React.Component {
     this.setState({status: 'attacher-accept-wager', acceptTerms: e.resolveAcceptP, wager: e.wager});
   }
   submitShipsEvt = (e) => {
-    console.log(`Event submit-ships, player: ${this.state.player}, status: ${this.state.status}`);
+    console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
 
     if (this.state.player === 'deployer') {
       this.setState({status: 'deployer-select', submitSelection: e.resolveSelectP});
@@ -161,17 +165,20 @@ class App extends React.Component {
   }
 
   /* passed to grid */
-  selectShips = (index) => {
-    const arr = this.state.selectedShips
-    arr[index] = arr[index] === 1 ? 0 : 1;
-    this.setState({selectedShips: arr})
-    console.log(this.state.selectedShips)
-  }
-  guessShips = (index) => {
-    const arr = this.state.guessedShips
-    arr[index] = arr[index] === 1 ? 0 : 1;
-    this.setState({guessedShips: arr})
-    console.log(this.state.guessedShips)
+  shipSelections = (index, type) => {
+    if(type === 'select') {
+      const arr = this.state.selectedShips
+      arr[index] = arr[index] === 1 ? 0 : 1;
+      this.setState({selectedShips: arr})
+      console.log(this.state.selectedShips)
+    } else if (type === 'guess') {
+      const arr = this.state.guessedShips
+      arr[index] = arr[index] === 1 ? 0 : 1;
+      this.setState({guessedShips: arr})
+      console.log(this.state.guessedShips)
+    } else {
+      alert('wrong array type in ship selection')
+    }
   }
 
   /* PLAYER OBJECTS */
@@ -179,19 +186,19 @@ class App extends React.Component {
     ...this.state.reach.hasRandom,
     seeOutcome: (outcome) => {
       console.log(`${Who} saw outcome ${outcome}`);
-      const evt = new Event('outcome', {bubbles: true, cancelable: false });
+      const evt = new Event('outcome', { bubbles: true, cancelable: false });
       evt.outcome = outcome;
       console.log('dispatching outcome...');
       window.dispatchEvent(evt);
     },
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);
-      window.dispatchEvent(new Event('timeout', {bubbles: true, cancelable: false }));
+      window.dispatchEvent(new Event('timeout', { bubbles: true, cancelable: false }));
     },
     selectShips: async () => {
       console.log(`${Who} sets ships...`)
       return await new Promise(resolveSelectP => {
-        const evt = new Event('submit-ships', {bubbles: true, cancelable: false});
+        const evt = new Event('submit-selections', { bubbles: true, cancelable: false});
         evt.resolveSelectP = resolveSelectP
         console.log('dispatching select event...')
         window.dispatchEvent(evt);
@@ -200,7 +207,7 @@ class App extends React.Component {
     guessShips: async () => {
       console.log(`${Who} guesses...`)
       const ships = await new Promise(resolveGuessP => {
-        const evt = new Event('submit-guess', {bubbles: true, cancelable: false});
+        const evt = new Event('submit-guess', { bubbles: true, cancelable: false});
         evt.resolveSelectP = resolveGuessP
         console.log('dispatching guess event...')
         window.dispatchEvent(evt);
@@ -232,7 +239,7 @@ class App extends React.Component {
   render() {
     let wallet;
     let grid;
-    const balance = <div className="balance">Balance: {this.state.balance}</div>
+    const balance = <div className="balance">Balance: {this.state.balance} {this.state.standardUnit}</div>
     switch(this.state.status) {
       case 'starting':
         wallet = null;
@@ -309,7 +316,7 @@ class App extends React.Component {
         wallet = <div className='wallet-container'>{balance}</div>;
         grid = (
           <div>
-            <Grid guessShips={this.selectShips} />
+            <Grid shipSelections={this.shipSelections} type="select" />
             <button onClick={this.submitDeployerSelect}>Submit</button>
           </div>
         )
@@ -319,7 +326,7 @@ class App extends React.Component {
         wallet = <div className='wallet-container'>{balance}</div>;
         grid = (
           <div>
-            <Grid guessShips={this.guessShips} />
+            <Grid shipSelections={this.shipSelections} type="guess" />
             <button onClick={this.submitDeployerGuess}>Submit</button>
           </div>
         )
@@ -358,7 +365,7 @@ class App extends React.Component {
         grid = (
           <div>
             Wager accepted.
-            <Grid guessShips={this.selectShips} />
+            <Grid shipSelections={this.shipSelections} type="select" />
             <button>Submit</button>
           </div>
         );
@@ -367,7 +374,7 @@ class App extends React.Component {
         wallet = <div className='wallet-container'>{balance}</div>;
         grid = (
           <div>
-            <Grid guessShips={this.guessShips} />
+            <Grid shipSelections={this.shipSelections} type="guess" />
             <button onClick={this.submitAttacherGuess}>Submit</button>
           </div>
         );
