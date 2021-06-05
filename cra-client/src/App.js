@@ -34,13 +34,15 @@ class App extends React.Component {
       selectedShips: new Array(16).fill(0),
       guessedShips: new Array(16).fill(0),
       outcome: null,
+      submitSelection: null,
+      submitGuess: null
     }
   }
 
   async componentDidMount() {
     window.addEventListener('timeout', this.timeoutEvt);
     window.addEventListener('accept-wager', this.acceptWagerEvt);
-    window.addEventListener('submit-selections', this.submitShipsEvt);
+    window.addEventListener('submit-selections', this.submitSelectionsEvt);
     window.addEventListener('submit-guesses', this.submitGuessesEvt);
     window.addEventListener('outcome', this.outcomeEvt);
 
@@ -55,7 +57,7 @@ class App extends React.Component {
   async componentWillUnmount() {
     window.removeEventListener('timeout', this.timeoutEvt);
     window.removeEventListener('accept-wager', this.acceptWagerEvt)
-    window.removeEventListener('submit-selections', this.submitShipsEvt)
+    window.removeEventListener('submit-selections', this.submitSelectionsEvt)
     window.removeEventListener('submit-guesses', this.submitGuessesEvt)
     window.removeEventListener('outcome', this.outcomeEvt)
   }
@@ -63,31 +65,19 @@ class App extends React.Component {
   /* Event Functions */
   timeoutEvt = (e) => {
     console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: 'connected'});
+    this.setState({status: `${this.state.player}-start`});
   }
   acceptWagerEvt = (e) => {
     console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${e.wager}`);
-    this.setState({status: 'attacher-accept-wager', acceptTerms: e.resolveAcceptP, wager: e.wager});
+    this.setState({status: 'attacher-select', acceptTerms: e.resolveAcceptP, wager: e.wager.toString()});
   }
-  submitShipsEvt = (e) => {
+  submitSelectionsEvt = (e) => {
     console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
-
-    if (this.state.player === 'deployer') {
-      this.setState({status: 'deployer-select', submitSelection: e.resolveSelectP});
-    } else if( this.state.player === 'attacher') {
-      this.setState({status: 'attacher-select', submitSelection: e.resolveSelectP});
-    } else {
-      console.log('Player state is not set!: ', this.state.player);
-    }
+    this.setState({status: `${this.state.player}-deployer-select`, submitSelection: e.resolveSelectP});
   }
   submitGuessesEvt = (e) => {
     console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
-
-    if (this.state.player === 'deployer') {
-      this.setState({status: 'deployer-guess', submitGuess: e.resolveGuessP});
-    } else if (this.state.player === 'attacher') {
-      this.setState({status: 'attacher-guess', submitGuess: e.resolveGuessP});
-    } 
+    this.setState({status: `${this.state.player}-deployer-select`, submitGuess: e.resolveGuessP});
   }
   outcomeEvt = (e) => {
     console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}`);
@@ -133,28 +123,40 @@ class App extends React.Component {
   deployAndWager = async () => {
     console.log('deployer-wait-deploy');
     this.setState({status: 'deployer-wait-deploy'});
+    // Deploy the contract
     const ctc = await this.state.account.deploy(backend);
 
     console.log('deployer-wait-attacher');
-    await backend.deployer(ctc, this.Deployer(this.state.wager));
+    // Get Contract Info
     const ctcInfoStr = await JSON.stringify(await ctc.getInfo(), null, 2);
-    this.setState({attachInfo: ctcInfoStr, status: 'deployer-wait-attacher'})
+    this.setState({attachInfo: ctcInfoStr, status: 'deployer-wait-attacher'});
+  
+    // Attacher wager to deployer and wait for attacher to accept
+    await backend.deployer(ctc, this.Deployer(this.state.wager));
+
+    this.setState({status: 'deployer-select'});
+    console.log('wager accpeted');
   }
 
   attachContract = async () => {
     console.log('attaching to contract')
     const parsed_info = await JSON.parse(this.state.attachInfo)
+    console.log(parsed_info)
+
     const ctc = await this.state.account.attach(backend, parsed_info);
+    console.log('ctc created');
+
     backend.attacher(ctc, this.Attacher());
     console.log('backend attached');
   }
 
-  acceptTerms = async () => {
-    await this.state.acceptTerms()
-    this.setState({status: 'attacher-weger-accepted'})
+  acceptTerms = () => {
+    this.state.acceptTerms();
+    this.setState({status: 'attacher-wager-accepted'})
   }
 
   submitSelection = async () => {
+    console.log(this.state.submitSelection);
     await this.state.submitSelection(this.state.selectedShips);
     this.setState({status: this.state.player + '-submitted-selection'})
   }
@@ -197,18 +199,20 @@ class App extends React.Component {
     },
     selectShips: async () => {
       console.log(`${Who} sets ships...`)
-      return await new Promise(resolveSelectP => {
-        const evt = new Event('submit-selections', { bubbles: true, cancelable: false});
-        evt.resolveSelectP = resolveSelectP
+      const ships = await new Promise(resolveSelectP => {
+        const evt = new Event('submit-selections', { bubbles: true, cancelable: false });
+        evt.resolveSelectP = resolveSelectP;
         console.log('dispatching select event...')
         window.dispatchEvent(evt);
-      })
+      });
+
+      return ships;
     },
     guessShips: async () => {
       console.log(`${Who} guesses...`)
       const ships = await new Promise(resolveGuessP => {
-        const evt = new Event('submit-guess', { bubbles: true, cancelable: false});
-        evt.resolveSelectP = resolveGuessP
+        const evt = new Event('submit-guess', { bubbles: true, cancelable: false });
+        evt.resolveGuessP = resolveGuessP;
         console.log('dispatching guess event...')
         window.dispatchEvent(evt);
       });
@@ -223,13 +227,10 @@ class App extends React.Component {
   Attacher = () => ({
     ...this.Player('Attacher'),
     acceptWager: async (amt) => {
-      console.log(`received wager: ${amt}`);
-      // const wager = reach.formatCurrency(amt, 4);
       console.log('attacher received wager: ', amt)
       return await new Promise(resolveAcceptedP => {
         const evt = new Event('accept-wager', {bubbles: true, cancelable: false });
         evt.resolveAcceptP = resolveAcceptedP
-        console.log(amt)
         evt.wager = amt;
         window.dispatchEvent(evt);
       });
@@ -237,8 +238,7 @@ class App extends React.Component {
   });
 
   render() {
-    let wallet;
-    let grid;
+    let wallet, grid;
     const balance = <div className="balance">Balance: {this.state.balance} {this.state.standardUnit}</div>
     switch(this.state.status) {
       case 'starting':
@@ -317,7 +317,7 @@ class App extends React.Component {
         grid = (
           <div>
             <Grid shipSelections={this.shipSelections} type="select" />
-            <button onClick={this.submitDeployerSelect}>Submit</button>
+            <button onClick={this.submitSelection}>Submit</button>
           </div>
         )
         break;
@@ -327,7 +327,7 @@ class App extends React.Component {
         grid = (
           <div>
             <Grid shipSelections={this.shipSelections} type="guess" />
-            <button onClick={this.submitDeployerGuess}>Submit</button>
+            <button onClick={this.submitGuess}>Submit</button>
           </div>
         )
         break;
@@ -335,7 +335,7 @@ class App extends React.Component {
         console.log('attacher-start')
         wallet = (
           <div className='wallet-container'>
-            <div>Balance: {this.state.balance}</div>
+            {balance}
             <textarea placeholder="Contract Info: {}" onChange={(e) => this.setState({attachInfo: e.target.value})}/>
             <button onClick={this.attachContract}>Submit</button>
           </div>
@@ -344,29 +344,19 @@ class App extends React.Component {
       case 'attacher-accept-wager':
         wallet = (
           <div className='wallet-container'>
-            <div>Balance: {this.state.balance}</div>
+            {balance}
             <div>Wager: {this.state.wager}</div>
             <button onClick={this.acceptTerms}>Accept Wager</button>
           </div>
         );
-      break;
-      case 'attacher-wager-accepted':
+        break;
+      case 'attacher-select':
+        console.log('attacher-select');
         wallet = <div className='wallet-container'>{balance}</div>;
         grid = (
           <div>
-            <Grid guessShips={this.guessShips} />
-            <button onClick={this.submitAttacherGuess}>Submit</button>
-          </div>
-        );
-      break;
-      case 'attacher-accept-select':
-        console.log('attacher-accept-select');
-        wallet = <div className='wallet-container'>{balance}</div>;
-        grid = (
-          <div>
-            Wager accepted.
             <Grid shipSelections={this.shipSelections} type="select" />
-            <button>Submit</button>
+            <button onClick={this.submitSelection}>Submit</button>
           </div>
         );
         break;
@@ -375,7 +365,7 @@ class App extends React.Component {
         grid = (
           <div>
             <Grid shipSelections={this.shipSelections} type="guess" />
-            <button onClick={this.submitAttacherGuess}>Submit</button>
+            <button onClick={this.submitGuess}>Submit</button>
           </div>
         );
         break;

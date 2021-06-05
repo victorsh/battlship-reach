@@ -67,7 +67,13 @@ import * as backend from './build/index.main.mjs';
       {
         ...Player('Attacher'),
         acceptWager: async (amt) => {
-          console.log(`Attacher accpeted the wager of ${fmt(amt)}`)
+          if (true) {
+            for (let i = 0; i < 5; i++) {
+              console.log(`Attacher being slow`);
+              await stdlib.wait(1);
+            }
+            console.log(`Attacher accpeted the wager of ${fmt(amt)}`);
+          }
         }
       }
     )
