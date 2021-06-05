@@ -40,48 +40,12 @@ class App extends React.Component {
   }
 
   async componentDidMount() {
-    window.addEventListener('timeout', this.timeoutEvt);
-    window.addEventListener('accept-wager', this.acceptWagerEvt);
-    window.addEventListener('submit-selections', this.submitSelectionsEvt);
-    window.addEventListener('submit-guesses', this.submitGuessesEvt);
-    window.addEventListener('outcome', this.outcomeEvt);
-
     const reach = await loadStdlib('ALGO');
     const { standardUnit } = reach;
     try { await reach.setWaitPort(false);
     } catch (e) { console.log(e); }
 
     this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
-  }
-
-  async componentWillUnmount() {
-    window.removeEventListener('timeout', this.timeoutEvt);
-    window.removeEventListener('accept-wager', this.acceptWagerEvt)
-    window.removeEventListener('submit-selections', this.submitSelectionsEvt)
-    window.removeEventListener('submit-guesses', this.submitGuessesEvt)
-    window.removeEventListener('outcome', this.outcomeEvt)
-  }
-
-  /* Event Functions */
-  timeoutEvt = (e) => {
-    console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-start`});
-  }
-  acceptWagerEvt = (e) => {
-    console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${e.wager}`);
-    this.setState({status: 'attacher-select', acceptTerms: e.resolveAcceptP, wager: e.wager.toString()});
-  }
-  submitSelectionsEvt = (e) => {
-    console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-deployer-select`, submitSelection: e.resolveSelectP});
-  }
-  submitGuessesEvt = (e) => {
-    console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-deployer-select`, submitGuess: e.resolveGuessP});
-  }
-  outcomeEvt = (e) => {
-    console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: 'outcome', outcome: e.outcome})
   }
 
   connectAccount = async () => {
@@ -146,7 +110,7 @@ class App extends React.Component {
     const ctc = await this.state.account.attach(backend, parsed_info);
     console.log('ctc created');
 
-    backend.attacher(ctc, this.Attacher());
+    await backend.attacher(ctc, this.Attacher());
     console.log('backend attached');
   }
 
@@ -187,23 +151,18 @@ class App extends React.Component {
   Player = (Who) => ({
     ...this.state.reach.hasRandom,
     seeOutcome: (outcome) => {
-      console.log(`${Who} saw outcome ${outcome}`);
-      const evt = new Event('outcome', { bubbles: true, cancelable: false });
-      evt.outcome = outcome;
-      console.log('dispatching outcome...');
-      window.dispatchEvent(evt);
+      console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}`);
+      this.setState({status: 'outcome', outcome: outcome})
     },
     informTimeout: () => {
-      console.log(`${Who} observed a timeout`);
-      window.dispatchEvent(new Event('timeout', { bubbles: true, cancelable: false }));
+      console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
+      this.setState({status: `${this.state.player}-start`});
     },
     selectShips: async () => {
       console.log(`${Who} sets ships...`)
       const ships = await new Promise(resolveSelectP => {
-        const evt = new Event('submit-selections', { bubbles: true, cancelable: false });
-        evt.resolveSelectP = resolveSelectP;
-        console.log('dispatching select event...')
-        window.dispatchEvent(evt);
+        console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
+        this.setState({status: `${this.state.player}-deployer-select`, submitSelection: resolveSelectP});
       });
 
       return ships;
@@ -211,10 +170,8 @@ class App extends React.Component {
     guessShips: async () => {
       console.log(`${Who} guesses...`)
       const ships = await new Promise(resolveGuessP => {
-        const evt = new Event('submit-guess', { bubbles: true, cancelable: false });
-        evt.resolveGuessP = resolveGuessP;
-        console.log('dispatching guess event...')
-        window.dispatchEvent(evt);
+        console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
+        this.setState({status: `${this.state.player}-deployer-select`, submitGuess: resolveGuessP});
       });
   
       return ships;
@@ -228,11 +185,9 @@ class App extends React.Component {
     ...this.Player('Attacher'),
     acceptWager: async (amt) => {
       console.log('attacher received wager: ', amt)
-      return await new Promise(resolveAcceptedP => {
-        const evt = new Event('accept-wager', {bubbles: true, cancelable: false });
-        evt.resolveAcceptP = resolveAcceptedP
-        evt.wager = amt;
-        window.dispatchEvent(evt);
+      return await new Promise(resolveAcceptP => {
+        console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${amt}`);
+        this.setState({status: 'attacher-select', acceptTerms: resolveAcceptP, wager: amt.toString()});
       });
     }
   });

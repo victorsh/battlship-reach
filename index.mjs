@@ -82,5 +82,6 @@ import * as backend from './build/index.main.mjs';
   const balanceAfterDeployer = await getBalance(accDeployer);
   const balanceAfterAttacher = await getBalance(accAttacher);
 
+  console.log(`Deployer: ${deployerInitialBalance}, Attacher: ${attacherInitialBalance}`)
   console.log(`Deployer: ${balanceAfterDeployer}, Attacher: ${balanceAfterAttacher}`)
 })();
