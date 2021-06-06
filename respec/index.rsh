@@ -32,8 +32,6 @@
 
 'reach 0.1';
 
-const BOARD_WIDTH = 4;
-const BOARD_HEIGHT = 4;
 const GRID_SIZE = 16;
 const ACCEPT_WAGER_DEADLINE = 10;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
@@ -57,8 +55,8 @@ const player = {
   wager: UInt,
   seeOutcome: Fun([UInt], Null),
   informTimeout: Fun([], Null),
-  getShips: Fun([], Array(UInt, GRID_SIZE)),
-  selectTargets: Fun([], Array(UInt, GRID_SIZE))
+  selectShips: Fun([], Array(UInt, GRID_SIZE)),
+  guessShips: Fun([], Array(UInt, GRID_SIZE))
 };
 const deployer = {
   ...player,
@@ -79,7 +77,6 @@ export const main = Reach.App(
       });
     };
 
-
     // A declassifies and submits wager
     A.only(() => {
       const wager = declassify(interact.wager);
@@ -95,13 +92,13 @@ export const main = Reach.App(
 
     // -> ON DRAW LOOP STARTS HERE
     var outcome = DRAW;
-    invariant(balance() == 2 * wager && isOutcome(outcome))
+    invariant(balance() == 2 * wager && isOutcome(outcome));
     while (outcome == DRAW) {
       commit();
 
       // A selects locations for ships and stores it in contract private.
       A.only(() => {
-        const _shipsA = interact.getShips();
+        const _shipsA = interact.selectShips();
         const [_commitA, _saltA] = makeCommitment(interact, _shipsA);
         const commitA = declassify(_commitA);
       });
@@ -111,7 +108,7 @@ export const main = Reach.App(
       // B selects locations for ships and stores them in contract public
       // unknowable(B, A(_shipsA, _saltA));
       B.only(() => {
-        const _shipsB = interact.getShips();
+        const _shipsB = interact.selectShips();
         const [_commitB, _saltB] = makeCommitment(interact, _shipsB);
         const commitB = declassify(_commitB);
       });
@@ -123,13 +120,13 @@ export const main = Reach.App(
 
       // Take Guesses A
       A.only(() => {
-        const guessesA = declassify(interact.selectTargets())
+        const guessesA = declassify(interact.guessShips())
       });
       A.publish(guessesA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
       commit();
       // Take Guesses B
       B.only(() => {
-        const guessesB = declassify(interact.selectTargets())
+        const guessesB = declassify(interact.guessShips());
       });
       B.publish(guessesB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
       commit();
