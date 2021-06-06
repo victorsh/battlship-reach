@@ -46,19 +46,22 @@ class App extends React.Component {
 class Player extends React.Component {
   random() { return reach.hasRandom.random(); }
 
-  async getShips() {
-    const ships = await new Promise(resolveShipsP => {
-      this.setState({view: 'GetShips', playable: true, resolveShipsP});
+  async selectShips() {
+    const ships = await new Promise(resolveSelectP => {
+      this.setState({view: 'GetShips', playable: true, resolveSelectP});
     });
     this.setState({view: 'WaitingForResults', ships});
 
-    return [];
+    return ships;
   }
 
-  async selectTargets() {
+  async guessShips() {
     const ships = await new Promise(resolveSelectShipsP => {
-      this.setState({view: 'SelectShips', playable: true, resolveSelectShipsP})
+      this.setState({view: 'SelectShips', playable: true, resolveSelectShipsP});
     });
+    this.setState({view: 'WaitingForResults', ships});
+
+    return ships;
   }
 
   seeOutcome(i) { this.setState({view: 'Done', outcome: intToOutcome[i]}); }

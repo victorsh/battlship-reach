@@ -30,70 +30,30 @@ class App extends React.Component {
       fundAmount: '10',
       wager: '3',
       attachInfo: null,
-      acceptTerms: null,
       selectedShips: new Array(16).fill(0),
       guessedShips: new Array(16).fill(0),
       outcome: null,
+      // Player Interactions
+      acceptTerms: null,
       submitSelection: null,
       submitGuess: null
     }
   }
 
   async componentDidMount() {
-    window.addEventListener('timeout', this.timeoutEvt);
-    window.addEventListener('accept-wager', this.acceptWagerEvt);
-    window.addEventListener('submit-selections', this.submitSelectionsEvt);
-    window.addEventListener('submit-guesses', this.submitGuessesEvt);
-    window.addEventListener('outcome', this.outcomeEvt);
-
     const reach = await loadStdlib('ALGO');
     const { standardUnit } = reach;
-    try { await reach.setWaitPort(false);
-    } catch (e) { console.log(e); }
 
     this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
   }
 
-  async componentWillUnmount() {
-    window.removeEventListener('timeout', this.timeoutEvt);
-    window.removeEventListener('accept-wager', this.acceptWagerEvt)
-    window.removeEventListener('submit-selections', this.submitSelectionsEvt)
-    window.removeEventListener('submit-guesses', this.submitGuessesEvt)
-    window.removeEventListener('outcome', this.outcomeEvt)
-  }
-
-  /* Event Functions */
-  timeoutEvt = (e) => {
-    console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-start`});
-  }
-  acceptWagerEvt = (e) => {
-    console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${e.wager}`);
-    this.setState({status: 'attacher-select', acceptTerms: e.resolveAcceptP, wager: e.wager.toString()});
-  }
-  submitSelectionsEvt = (e) => {
-    console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-deployer-select`, submitSelection: e.resolveSelectP});
-  }
-  submitGuessesEvt = (e) => {
-    console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: `${this.state.player}-deployer-select`, submitGuess: e.resolveGuessP});
-  }
-  outcomeEvt = (e) => {
-    console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}`);
-    this.setState({status: 'outcome', outcome: e.outcome})
-  }
-
   connectAccount = async () => {
     const account = await this.state.reach.getDefaultAccount();
-    console.log(account);
     const address = await this.state.reach.formatAddress(account.getAddress());
     console.log(`Account: ${account}, Address: ${address}`);
 
     let balance = await this.state.reach.balanceOf(account);
-    console.log(`Raw Balance: ${balance}`);
     balance = this.state.reach.formatCurrency(balance, 4);
-    console.log(`Formatted Balance: ${balance}`);
 
     this.setState({account, address, balance, status: 'connected'});
   }
@@ -105,7 +65,6 @@ class App extends React.Component {
       await this.state.reach.transfer(faucet, this.state.account, this.state.reach.parseCurrency(this.state.fundAmount));
       let balance = await this.state.reach.balanceOf(this.state.account);
       balance = this.state.reach.formatCurrency(balance, 4);
-      console.log(balance);
       this.setState({balance, loadingFaucet: false});
     } catch (e) {
       console.log('failed to get faucet: ', e);
@@ -122,62 +81,53 @@ class App extends React.Component {
 
   deployAndWager = async () => {
     console.log('deployer-wait-deploy');
+    const ctc = this.state.account.deploy(backend);
     this.setState({status: 'deployer-wait-deploy'});
-    // Deploy the contract
-    const ctc = await this.state.account.deploy(backend);
-
     console.log('deployer-wait-attacher');
-    // Get Contract Info
+
+    backend.deployer(ctc, this.Deployer(this.state.wager));
     const ctcInfoStr = await JSON.stringify(await ctc.getInfo(), null, 2);
     this.setState({attachInfo: ctcInfoStr, status: 'deployer-wait-attacher'});
-  
-    // Attacher wager to deployer and wait for attacher to accept
-    await backend.deployer(ctc, this.Deployer(this.state.wager));
-
-    this.setState({status: 'deployer-select'});
-    console.log('wager accpeted');
   }
 
   attachContract = async () => {
     console.log('attaching to contract')
     const parsed_info = await JSON.parse(this.state.attachInfo)
-    console.log(parsed_info)
+    console.log(parsed_info.toString())
 
     const ctc = await this.state.account.attach(backend, parsed_info);
     console.log('ctc created');
 
-    backend.attacher(ctc, this.Attacher());
+    await backend.attacher(ctc, this.Attacher());
     console.log('backend attached');
   }
 
+  // Method trigger on player interaction
   acceptTerms = () => {
     this.state.acceptTerms();
-    this.setState({status: 'attacher-wager-accepted'})
+    this.setState({status: 'attacher-wait-deployer'});
   }
 
-  submitSelection = async () => {
-    console.log(this.state.submitSelection);
-    await this.state.submitSelection(this.state.selectedShips);
-    this.setState({status: this.state.player + '-submitted-selection'})
+  submitSelection = () => {
+    this.state.submitSelection(this.state.selectedShips);
+    this.setState({status: 'submitted-selection'});
   }
 
-  submitGuess = async () => {
-    await this.state.submitGuess(this.state.guessShips);
-    this.setState({status: this.state.player + '-submitted-guess'})
+  submitGuess = () => {
+    this.state.submitGuess(this.state.guessedShips);
+    this.setState({status: 'submitted-guess'});
   }
 
   /* passed to grid */
   shipSelections = (index, type) => {
     if(type === 'select') {
-      const arr = this.state.selectedShips
+      const arr = this.state.selectedShips;
       arr[index] = arr[index] === 1 ? 0 : 1;
-      this.setState({selectedShips: arr})
-      console.log(this.state.selectedShips)
+      this.setState({selectedShips: arr});
     } else if (type === 'guess') {
-      const arr = this.state.guessedShips
+      const arr = this.state.guessedShips;
       arr[index] = arr[index] === 1 ? 0 : 1;
-      this.setState({guessedShips: arr})
-      console.log(this.state.guessedShips)
+      this.setState({guessedShips: arr});
     } else {
       alert('wrong array type in ship selection')
     }
@@ -186,38 +136,33 @@ class App extends React.Component {
   /* PLAYER OBJECTS */
   Player = (Who) => ({
     ...this.state.reach.hasRandom,
-    seeOutcome: (outcome) => {
-      console.log(`${Who} saw outcome ${outcome}`);
-      const evt = new Event('outcome', { bubbles: true, cancelable: false });
-      evt.outcome = outcome;
-      console.log('dispatching outcome...');
-      window.dispatchEvent(evt);
-    },
     informTimeout: () => {
-      console.log(`${Who} observed a timeout`);
-      window.dispatchEvent(new Event('timeout', { bubbles: true, cancelable: false }));
+      console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`);
+      this.setState({status: `${this.state.player}-start`});
     },
     selectShips: async () => {
       console.log(`${Who} sets ships...`)
       const ships = await new Promise(resolveSelectP => {
-        const evt = new Event('submit-selections', { bubbles: true, cancelable: false });
-        evt.resolveSelectP = resolveSelectP;
-        console.log('dispatching select event...')
-        window.dispatchEvent(evt);
+        console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
+        this.setState({status: `${this.state.player}-select`, submitSelection: resolveSelectP});
       });
 
+      console.log(`ships: ${ships}`)
       return ships;
     },
     guessShips: async () => {
       console.log(`${Who} guesses...`)
       const ships = await new Promise(resolveGuessP => {
-        const evt = new Event('submit-guess', { bubbles: true, cancelable: false });
-        evt.resolveGuessP = resolveGuessP;
-        console.log('dispatching guess event...')
-        window.dispatchEvent(evt);
+        console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
+        this.setState({status: `${this.state.player}-guess`, submitGuess: resolveGuessP});
       });
   
+      console.log(`ships: ${ships}`)
       return ships;
+    },
+    seeOutcome: (outcome) => {
+      console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}, outcome: ${outcome}`);
+      this.setState({status: 'outcome', outcome: outcome})
     }
   });
   Deployer = (wager) => ({
@@ -228,11 +173,9 @@ class App extends React.Component {
     ...this.Player('Attacher'),
     acceptWager: async (amt) => {
       console.log('attacher received wager: ', amt)
-      return await new Promise(resolveAcceptedP => {
-        const evt = new Event('accept-wager', {bubbles: true, cancelable: false });
-        evt.resolveAcceptP = resolveAcceptedP
-        evt.wager = amt;
-        window.dispatchEvent(evt);
+      return await new Promise(resolveAcceptP => {
+        console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${amt}`);
+        this.setState({status: 'attacher-accept-wager', acceptTerms: resolveAcceptP, wager: amt.toString()});
       });
     }
   });
@@ -350,6 +293,10 @@ class App extends React.Component {
           </div>
         );
         break;
+      case 'attacher-wait-deployer':
+        console.log('attacher-wait-deployer');
+        wallet = <div className='wallet-container'>{balance}<br /> waiting for deployer</div>;
+        break;
       case 'attacher-select':
         console.log('attacher-select');
         wallet = <div className='wallet-container'>{balance}</div>;
@@ -368,6 +315,12 @@ class App extends React.Component {
             <button onClick={this.submitGuess}>Submit</button>
           </div>
         );
+        break;
+      case 'submitted-selection':
+        wallet = <div className='wallet-container'>{balance}<br /> waiting for guess...</div>;
+        break;
+      case 'submitted-guess':
+        wallet = <div className='wallet-container'>{balance}<br /> waiting for outcome...</div>;
         break;
       case 'outcome':
         console.log('what is the outcome?')
