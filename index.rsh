@@ -105,8 +105,9 @@ export const main = Reach.App(
       A.publish(commitA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
       commit();
       // B should not know the location of A's ships
+      unknowable(B, A(_shipsA, _saltA));
+
       // B selects locations for ships and stores them in contract public
-      // unknowable(B, A(_shipsA, _saltA));
       B.only(() => {
         const _shipsB = interact.selectShips();
         const [_commitB, _saltB] = makeCommitment(interact, _shipsB);
@@ -115,22 +116,21 @@ export const main = Reach.App(
       B.publish(commitB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
       commit();
       // A should not know the location of B's ships
-      // unknowable(A, B(_shipsB, _saltB));
+      unknowable(A, B(_shipsB, _saltB));
 
 
-      // Take Guesses A
+      // A guesses B's ship locations
       A.only(() => {
-        const guessesA = declassify(interact.guessShips())
+        const guessesA = declassify(interact.guessShips());
       });
       A.publish(guessesA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
       commit();
-      // Take Guesses B
+      // B guesses A's ship locations
       B.only(() => {
         const guessesB = declassify(interact.guessShips());
       });
       B.publish(guessesB).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
       commit();
-
 
 
       // A decrypts and stores ships locations on contract public
