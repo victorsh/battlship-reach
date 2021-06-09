@@ -14,9 +14,6 @@ import reachLogoVertical from '../images/reach-vertical.svg';
 
 import Grid from './Grid'
 
-const intToOutcome = ['Attacher wins!', 'Draw!', 'Deployer wins!'];
-const GRID_SIZE = 9;
-
 const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
 class App extends React.Component {
@@ -31,7 +28,7 @@ class App extends React.Component {
       // Game State
       status: 'starting',
       fundAmount: '10',
-      wager: '3',
+      wager: '1',
       attachInfo: null,
       selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
       guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
@@ -154,24 +151,24 @@ class App extends React.Component {
     selectShips: async () => {
       if (globals.DEBUG) console.log(`${Who} sets ships...`);
       const ships = await new Promise(resolveSelectP => {
-        console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
+        if (globals.DEBUG) console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`);
         this.setState({status: `${this.state.player}-select`, submitSelection: resolveSelectP});
       });
 
       if (globals.DEBUG) console.log(`Select Ships method resolved. SHIPS: ${ships}`);
-      ships = test_select();
+      ships = mock_select();
 
       return ships;
     },
     guessShips: async () => {
       if (globals.DEBUG) console.log(`${Who} guesses...`);
       const ships = await new Promise(resolveGuessP => {
-        console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
+        if (globals.DEBUG) console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`);
         this.setState({status: `${this.state.player}-guess`, submitGuess: resolveGuessP});
       });
 
       if (globals.DEBUG) console.log(`Guess Ships method resolved. SHIPS: ${ships}`);
-      ships = test_guess();
+      ships = mock_guess();
 
       return ships;
     }
@@ -183,9 +180,9 @@ class App extends React.Component {
   Attacher = () => ({
     ...this.Player('Attacher'),
     acceptWager: async (amt) => {
-      console.log('attacher received wager: ', amt);
+      if (globals.DEBUG) console.log('Attacher received wager: ', amt);
       return await new Promise(resolveAcceptP => {
-        console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${amt}`);
+        if (globals.DEBUG) console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${amt}`);
         this.setState({status: 'attacher-accept-wager', acceptTerms: resolveAcceptP, wager: amt.toString()});
       });
     }
@@ -374,32 +371,3 @@ class App extends React.Component {
 }
 
 export default App;
-
-/*
-  Other Methods
-*/
-
-const test_guess = () => {
-  const board = [];
-  let guess_count = 0;
-  for (let i = 0; i < globals.CONTRACT_GRID_SIZE; i++) {
-    if (guess_count < globals.CONTRACT_GRID_SIZE / 2 && Math.random() > 0.5) {
-      board.push(1);
-      guess_count++;
-    } else {
-      board.push(0);
-    }
-  }
-  if (globals.DEBUG) console.log(board)
-  return board;
-}
-
-const test_select = () => {
-  const board = [];
-  for (let i = 0; i < globals.CONTRACT_GRID_SIZE; i++) {
-    board.push(Math.random() > 0.5 ? 1 : 0)
-  };
-
-  if (globals.DEBUG) console.log(board);
-  return board;
-}
