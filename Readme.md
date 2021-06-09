@@ -15,10 +15,10 @@ Battleship written in Reach and React running on the Algorand Blockchain. This p
 <p>After laying out the basic structure of the contract using the rock paper scissors example</p>
 
 #### Running Locally
-`cd cra-client`
-`npm i`
-`npm start`
-`REACH_CONNECTOR_MODE=ALGO reach devnet`
+- `REACH_CONNECTOR_MODE=ALGO reach devnet`
+- `cd cra-client`
+- `npm i`
+- `npm start`
 
 #### Other Commands
 - Run reach built react client: `REACH_CONNECTOR_MODE=ALGO ./reach react`
@@ -36,6 +36,8 @@ maximum anchor bulk upon jar design fog sting weird boil guilt cook fabric mail 
 
 #### Sources
 - A single participant example showcasing [array_groups](https://github.com/reach-sh/reach-lang/blob/8f41a2ae17220041ba365274dd32ae7c96b11f2e/hs/test-examples/features/array_groups.rsh)
+
+
 
 <style type='text/css'>
   p { color: #999; }
