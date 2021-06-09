@@ -31,11 +31,11 @@ import * as backend from './build/index.main.mjs';
     selectShips: () => {
       const board = [];
       for (let i = 0; i < GRID_SIZE; i++) {
-        board.push(Math.random() > 0.5 ? 1 : 0)
+        board.push(Math.random() > 0.5 ? 1 : 0);
       }
-      console.log(`${Who} sets ships...`)
-      console.log(board)
-      return board
+      console.log(`${Who} sets ships...`);
+      console.log(board);
+      return board;
     },
     guessShips: () => {
       const board = [];
@@ -48,9 +48,9 @@ import * as backend from './build/index.main.mjs';
           board.push(0);
         }
       }
-      console.log(`${Who} guesses...`)
-      console.log(board)
-      return board
+      console.log(`${Who} guesses...`);
+      console.log(board);
+      return board;
     }
   });
 
