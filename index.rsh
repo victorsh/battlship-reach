@@ -152,7 +152,7 @@ export const main = Reach.App(
       invariant(balance() == wager * 2);
       while(x < GRID_SIZE) {
         commit();
-        Anybody.publish();
+        B.publish();
 
         [ x, countA, countB ] = [
           x + 1,

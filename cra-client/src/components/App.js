@@ -44,7 +44,7 @@ class App extends React.Component {
     const reach = await loadStdlib('ALGO');
     const { standardUnit } = reach;
 
-    this.setState({status: 'landing', reach: reach, standardUnit: standardUnit});
+    this.setState({status: 'connected', reach: reach, standardUnit: standardUnit});
   }
 
   connectAccount = async () => {
@@ -199,7 +199,7 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('Landing');
         wallet = (
           <div className='wallet-container'>
-            <div style={{fontSize: '5vh'}}>Connect you Algorand wallet using the mnemonic to get started.</div>
+            <div style={{fontSize: '5vh'}}>Connect you Algorand wallet to get started.</div>
             <button className="header-button" onClick={this.connectAccount}>Connect Wallet</button>
           </div>
         );
@@ -209,8 +209,8 @@ class App extends React.Component {
         wallet = (
           <div className='wallet-container'>
             {balance}
-            <div style={{width: "33%"}}>
-              <input type="text" onChange={(e) => this.setState({fundAmount: e.target.value})} />
+            <div style={{width: '33%', display: 'flex', alignItems: 'baseline'}}>
+              <input className='fund-input' type="text" onChange={(e) => this.setState({fundAmount: e.target.value})} />
               <button onClick={this.fundAccount}>Fund Wallet</button>
               {this.state.loadingFaucet ? <div>Loading funds from faucet...</div> : null}
             </div>
@@ -362,8 +362,8 @@ class App extends React.Component {
         <div className="wallet">{wallet}</div>
         {/* <Description /> */}
         {grid}
-        <div className="footer">
-          footer
+        <div className="footer-container">
+          <div className="footer">hi</div>
         </div>
       </div>
     );

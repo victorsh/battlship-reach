@@ -17,7 +17,8 @@ module.exports = {
   },
   devServer: {
     port: process.env.DEV_PORT,
-    watchContentBase: true
+    watchContentBase: true,
+    hot: true
   },
   resolve: {
     extensions: ['.js', '.ts', '.mjs', '.json', '.wasm']
@@ -27,7 +28,7 @@ module.exports = {
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ['babel-loader', 'eslint-loader']
+        use: ['babel-loader']
       },
       {
         test: /\.m?js/,
