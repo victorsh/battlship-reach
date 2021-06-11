@@ -1,6 +1,6 @@
 import React from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
-import { Button, Form, FormControl, InputGroup } from 'react-bootstrap'
+import { Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
 
 import Description from './Description'
 import Grid from './Grid'
@@ -26,9 +26,9 @@ class App extends React.Component {
       player: null,
       // Game State
       status: 'starting',
-      fundAmount: '10',
+      fundAmount: '',
       wager: '1',
-      attachInfo: null,
+      attachInfo: '',
       selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
       guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
       outcome: null,
@@ -36,7 +36,8 @@ class App extends React.Component {
       acceptTerms: null,
       submitSelection: null,
       submitGuess: null,
-      count: 0
+      showCopyAlert: false,
+      shipSubmit: false
     }
   }
 
@@ -44,7 +45,7 @@ class App extends React.Component {
     const reach = await loadStdlib('ALGO')
     const { standardUnit } = reach
 
-    this.setState({status: 'connected', reach: reach, standardUnit: standardUnit})
+    this.setState({status: 'landing', reach: reach, standardUnit: standardUnit})
   }
 
   connectAccount = async (e) => {
@@ -59,37 +60,65 @@ class App extends React.Component {
 
     this.setState({account, address, balance, status: 'connected'})
   }
-  fundAccount = async () => {
+  fundAccount = async (e) => {
+    e.preventDefault()
+
+    const fundAmount = this.state.fundAmount
+    if (isNaN(fundAmount)) {
+      alert('Invalid fund input')
+      this.setState({fundAmount: ''})
+      return
+    }
+
+    if (Number(fundAmount) < 0.0001) {
+      alert('Fund amount must be a value greater than 0')
+      this.setState({fundAmount: ''})
+      return
+    }
+
     this.setState({loadingFaucet: true})
     try {
       const faucet = await this.state.reach.getFaucet()
       await this.state.reach.transfer(faucet, this.state.account, this.state.reach.parseCurrency(this.state.fundAmount))
       let balance = await this.state.reach.balanceOf(this.state.account)
       balance = this.state.reach.formatCurrency(balance, 4)
-      this.setState({balance, loadingFaucet: false})
+      this.setState({balance, loadingFaucet: false, fundAmount: 0})
+      this.setState({fundAmount: ''})
     } catch (e) {
       if (globals.DEBUG) console.log('failed to get faucet: ', e)
       this.setState({loadingFaucet: false})
     }
   }
-  wagerOnChange = (e) => {
-    if (isNaN(e.target.value)) {
-      // UNHAPPY
-      alert('must be a number')
+  deployAndWager = async (e) => {
+    e.preventDefault()
+
+    const wager = this.state.wager
+
+    if (isNaN(wager)) {
+      alert('Wager must be a number.')
+      this.setState({wager: ''})
+      return
     }
-    this.setState({wager: e.target.value})
-  }
-  deployAndWager = async () => {
+
+    if (Number(wager) < 0.001) {
+      alert('Wager must be greater that 0.001')
+      this.setState({wager: ''})
+      return
+    } 
+
     if (globals.DEBUG) console.log('deployer-wait-deploy')
     const ctc = this.state.account.deploy(backend)
     this.setState({status: 'deployer-wait-deploy'})
     if (globals.DEBUG) console.log('deployer-wait-attacher')
 
-    backend.deployer(ctc, this.Deployer(this.state.wager))
+    const parsedWager = this.state.reach.parseCurrency(wager)
+    backend.deployer(ctc, this.Deployer(parsedWager))
     const ctcInfoStr = await JSON.stringify(await ctc.getInfo(), null, 2)
     this.setState({attachInfo: ctcInfoStr, status: 'deployer-wait-attacher'})
   }
-  attachContract = async () => {
+  attachContract = async (e) => {
+    e.preventDefault()
+
     if (globals.DEBUG) console.log('Attaching to contract.')
     const parsed_info = await JSON.parse(this.state.attachInfo)
     if (globals.DEBUG) console.log(`Contract info: ${parsed_info.toString()}`)
@@ -100,35 +129,100 @@ class App extends React.Component {
   }
 
   // Method trigger on player interaction
-  acceptTerms = () => {
+  copyContractInfo = (e) => {
+    e.preventDefault()
+    if (globals.DEBUG) console.log('Deployer copied contract info to clipboard.')
+    navigator.clipboard.writeText(this.state.attachInfo)
+    this.setState({showCopyAlert: true})
+    setTimeout(() => this.setState({showCopyAlert: false}), 3000)
+  }
+  acceptTerms = (e) => {
+    e.preventDefault()
     if (globals.DEBUG) console.log('Attacher has clicked acceptTerms().')
     this.state.acceptTerms()
     this.setState({status: 'attacher-wait-deployer'})
   }
-  submitSelection = () => {
+  submitSelection = (e) => {
+    e.preventDefault()
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitSelection().`)
     this.state.submitSelection(this.state.selectedShips)
-    this.setState({status: 'submitted-selection'})
+    this.setState({status: 'submitted-selection', shipSubmit: false})
   }
-  submitGuess = () => {
+  submitGuess = (e) => {
+    e.preventDefault()
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitGuess().`)
     this.state.submitGuess(this.state.guessedShips)
-    this.setState({status: 'submitted-guess'})
+    this.setState({status: 'submitted-guess', shipSubmit: false})
   }
 
   /* passed to grid */
-  shipSelections = (index, type) => {
+  shipSelections = (index, type, allowSubmit) => {
     if(type === 'select') {
       const arr = this.state.selectedShips
       arr[index] = arr[index] === 1 ? 0 : 1
-      this.setState({selectedShips: arr})
+      this.setState({selectedShips: arr, shipSubmit: allowSubmit})
     } else if (type === 'guess') {
       const arr = this.state.guessedShips
       arr[index] = arr[index] === 1 ? 0 : 1
-      this.setState({guessedShips: arr})
+      this.setState({guessedShips: arr, shipSubmit: allowSubmit})
     } else {
       alert('wrong array type in ship selection')
     }
+  }
+
+  BalanceContainer = () => {
+    return (this.state.status === 'starting' || this.state.status === 'landing')
+      ? null
+      : (
+        <div className="balance">
+          <span>Balance</span>
+          <span>{this.state.balance} {this.state.standardUnit}</span>
+        </div>
+      )
+  }
+
+  OutcomeContainer = () => {
+    switch(this.state.outcome) {
+      case 0: return <div>{this.state.player === 'attacher' ? 'You win!' : 'You lose!'}</div> // attacher wins
+      case 1: return <div>{'Draw! Restarting game to ship select.'}</div>
+      case 2: return <div>{this.state.player === 'deployer' ? 'You win!' : 'You lose!'}</div> // deployer wins
+      default: return <div>Something went wrong :(</div>
+    }
+  }
+
+  handleDraw = () => {
+    if (globals.DEBUG) console.log('handle draw')
+
+    this.setState({
+      status: 'player-select-ships',
+      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      acceptTerms: null,
+      submitSelection: null,
+      submitGuess: null,
+      shipSubmit: false,
+      outcome: null,
+    })
+  } 
+
+  handleReset = () => {
+    if (globals.DEBUG) console.log('handle reset')
+
+    this.setState({
+      status: 'connected',
+      player: null,
+      fundAmount: '',
+      wager: '1',
+      attachInfo: '',
+      showCopyAlert: false,
+      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      acceptTerms: null,
+      submitSelection: null,
+      submitGuess: null,
+      shipSubmit: false,
+      outcome: null,
+    })
   }
 
   /* PLAYER OBJECTS */
@@ -139,32 +233,38 @@ class App extends React.Component {
       let balance = await this.state.reach.balanceOf(this.state.account)
       balance = this.state.reach.formatCurrency(balance, 4)
       this.setState({balance, status: 'outcome', outcome: outcome.toString()})
+      setTimeout(() => this.handleDraw(), 3000)
+    },
+    loadingResult: async (load) => {
+      if (globals.DEBUG) console.log(`Event loadingResult, player: ${this.state.player}, status: ${this.state.status}, load: ${load.toString()}`)
     },
     informTimeout: () => {
       if (globals.DEBUG) console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`)
-      this.setState({status: `${this.state.player}-start`})
+      this.setState({status: 'timeout'})
     },
     selectShips: async () => {
       if (globals.DEBUG) console.log(`${Who} sets ships...`)
-      const ships = await new Promise(resolveSelectP => {
+      let ships = await new Promise(resolveSelectP => {
         if (globals.DEBUG) console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`)
-        this.setState({status: `${this.state.player}-select`, submitSelection: resolveSelectP})
+        this.setState({status: `player-select-ships`, submitSelection: resolveSelectP})
       })
 
       if (globals.DEBUG) console.log(`Select Ships method resolved. SHIPS: ${ships}`)
-      ships = mock_select()
+      // ships = mock_select()
+      ships = globals.test_array
 
       return ships
     },
     guessShips: async () => {
       if (globals.DEBUG) console.log(`${Who} guesses...`)
-      const ships = await new Promise(resolveGuessP => {
+      let ships = await new Promise(resolveGuessP => {
         if (globals.DEBUG) console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`)
-        this.setState({status: `${this.state.player}-guess`, submitGuess: resolveGuessP})
+        this.setState({status: `player-guess-ships`, submitGuess: resolveGuessP})
       })
 
       if (globals.DEBUG) console.log(`Guess Ships method resolved. SHIPS: ${ships}`)
-      ships = mock_guess()
+      // ships = mock_guess()
+      ships = globals.test_array
 
       return ships
     }
@@ -176,27 +276,32 @@ class App extends React.Component {
   Attacher = () => ({
     ...this.Player('Attacher'),
     acceptWager: async (amt) => {
-      if (globals.DEBUG) console.log('Attacher received wager: ', amt)
+      const formattedAmt = this.state.reach.formatCurrency(amt)
+      if (globals.DEBUG) console.log('Attacher received wager: ', formattedAmt)
       return await new Promise(resolveAcceptP => {
-        if (globals.DEBUG) console.log(`Event accept-wager, player: ${this.state.player}, status: ${this.state.status}, wager: ${amt}`)
-        this.setState({status: 'attacher-accept-wager', acceptTerms: resolveAcceptP, wager: amt.toString()})
+        if (globals.DEBUG) console.log(
+          `Event accept-wager,
+          player: ${this.state.player},
+          status: ${this.state.status},
+          wager: ${formattedAmt}`
+        )
+        this.setState({status: 'attacher-accept-wager', acceptTerms: resolveAcceptP, wager: formattedAmt})
       })
     }
   })
 
   render() {
-    let wallet, grid = null
-    const balance = <div className="balance">Balance: {this.state.balance} {this.state.standardUnit}</div>
+    let wallet = ''
     switch(this.state.status) {
       case 'starting':
-        if (globals.DEBUG) console.log('Starting')
+        if (globals.DEBUG) console.log('starting')
         break
       case 'landing':
-        if (globals.DEBUG) console.log('Landing')
+        if (globals.DEBUG) console.log('landing')
         wallet = (
-          <div>
-            <div style={{fontSize: '5vh'}}>Connect you Algorand wallet to get started.</div>
-            <Button variant='success' onClick={this.connectAccount}>Connect Wallet</Button>
+          <div className='connect-wallet'>
+            <div style={{fontSize: '1.5em'}}>Connect you Algorand wallet to get started.</div>
+            <Button style={{marginTop: '5%'}}variant='success' onClick={this.connectAccount}>Connect Wallet</Button>
           </div>
         )
         break
@@ -204,15 +309,18 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('connected')
         wallet = (
           <div className='wallet-container'>
-            {balance}
             <div className='fund'>
               <InputGroup size='sm' className='mb-3'>
-                <FormControl onChange={(e) => {console.log(this.state.fundAmount); this.setState({fundAmount: e.target.value})}} aria-label="Small" aria-describedby="inputGroup-sizing-sm" />
+                <FormControl
+                  value={this.state.fundAmount}
+                  onChange={(e) => {this.setState({fundAmount: e.target.value})}}
+                  aria-label="Small"
+                  aria-describedby="inputGroup-sizing-sm" />
                 <InputGroup.Append>
-                  <InputGroup.Text id='basic-addon2'>ALGO</InputGroup.Text>
+                  <Button variant='secondary' disabled>ALGO</Button>
                 </InputGroup.Append>
                 <InputGroup.Append>
-                  <Button onClick={this.fundAccount} variant='outline-secondary'>Fund</Button>
+                  <Button variant='success' onClick={this.fundAccount}>Fund</Button>
                 </InputGroup.Append>
               </InputGroup>
             </div>
@@ -227,11 +335,10 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('select-player')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            <span>Select Player</span>
-            <div style={{display: 'flex', justifyContent: 'space-between', width: '20vw'}}>
-              <Button onClick={() => this.setState({status: 'deployer-start', player: 'deployer'})}>Deployer</Button>
-              <Button onClick={() => this.setState({status: 'attacher-start', player: 'attacher'})}>Attacher</Button>
+            <div className='guide-text'>Select Player</div>
+            <div style={{display: 'flex', justifyContent: 'space-around', width: '80%'}}>
+              <Button variant='primary' onClick={() => this.setState({status: 'deployer-start', player: 'deployer'})}>Deployer</Button>
+              <Button variant='danger' onClick={() => this.setState({status: 'attacher-start', player: 'attacher'})}>Attacher</Button>
             </div>
           </div>
         )
@@ -240,12 +347,11 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('deployer-start')
         wallet = (
           <div className='wallet-container'>
-            {balance}
             <div style={{width: '20vw'}}>
               <InputGroup size='sm' className='mb-3'>
                 <FormControl onChange={(e) => {this.setState({wager: e.target.value})}} aria-label="Small" aria-describedby="inputGroup-sizing-sm" />
                 <InputGroup.Append>
-                    <Button onClick={() => this.deployAndWager()} variant='outline-primary'>Place Wager</Button>
+                  <Button variant='success' onClick={this.deployAndWager}>Place Wager</Button>
                 </InputGroup.Append>
               </InputGroup>
             </div>
@@ -256,8 +362,7 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('deployer-wait-deploy')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            <div>Deploying contract...</div>
+            <div className='guide-text'>Deploying contract...</div>
           </div>
         )
         break
@@ -265,29 +370,9 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('deployer-wait-attacher')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            <div>Waiting for attacher...</div>
-            <textarea readOnly={true} value={this.state.attachInfo} style={{padding: '5vh'}} />
-          </div>
-        )
-        break
-      case 'deployer-select':
-        if (globals.DEBUG) console.log('deployer-select')
-        wallet = <div className='wallet-container'>{balance}</div>
-        grid = (
-          <div>
-            <Grid shipSelections={this.shipSelections} type="select" />
-            <Button onClick={this.submitSelection}>Submit</Button>
-          </div>
-        )
-        break
-      case 'deployer-guess':
-        if (globals.DEBUG) console.log('deployer-guess')
-        wallet = <div className='wallet-container'>{balance}</div>
-        grid = (
-          <div>
-            <Grid shipSelections={this.shipSelections} type="guess" />
-            <Button onClick={this.submitGuess}>Submit</Button>
+            <div className='guide-text'>Waiting for attacher...</div>
+            <div style={{width: '75%', height: '100%'}}>{this.state.attachInfo}</div>
+            <Button className='button-style' variant='secondary' onClick={(e) => this.copyContractInfo(e)}>Copy</Button>
           </div>
         )
         break
@@ -295,9 +380,8 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('attacher-start')
         wallet = (
           <div className='wallet-container'>
-            {balance}
             <textarea placeholder="Contract Info: {}" onChange={(e) => this.setState({attachInfo: e.target.value})}/>
-            <Button onClick={this.attachContract}>Submit</Button>
+            <Button className='button-style' variant='success' onClick={this.attachContract}>Submit</Button>
           </div>
         )
         break
@@ -305,9 +389,8 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('attacher-accepts-wager')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            <div>Wager: {this.state.wager}</div>
-            <Button onClick={this.acceptTerms}>Accept Wager</Button>
+            <div className='guide-text'>Accept a wager of {this.state.wager} ALGO?</div>
+            <Button className='button-style' variant='success' onClick={this.acceptTerms}>Accept</Button>
           </div>
         )
         break
@@ -315,64 +398,84 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('attacher-wait-deployer')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            <br />
-            Waiting for {this.state.player === 'deployer' ? 'Attacher' : 'Deployer'}
+            <div className='guide-text'>Attached to contract. Waiting for deployer...</div>
           </div>
         )
         break
-      case 'attacher-select':
-        if (globals.DEBUG) console.log('attacher-select')
-        wallet = <div className='wallet-container'>{balance}</div>
-        grid = (
-          <div>
+      case 'player-select-ships':
+        if (globals.DEBUG) console.log('player-select-ships')
+        wallet = (
+          <div className='wallet-container'>
+            <div className='guide-text'>Select where you would like to place your ships. You must select 3 spaces.</div>
             <Grid shipSelections={this.shipSelections} type="select" />
-            <Button onClick={this.submitSelection}>Submit</Button>
+            <div style={{margin: '2vw'}}>
+              {this.state.shipSubmit
+                ? <Button onClick={this.submitSelection}>Submit</Button>
+                : <Button disabled>Submit</Button>
+              }
+            </div>
           </div>
         )
         break
-      case 'attacher-guess':
-        if (globals.DEBUG) console.log('attacher-guess')
-        wallet = <div className='wallet-container'>{balance}</div>
-        grid = (
-          <div>
+      case 'player-guess-ships':
+        if (globals.DEBUG) console.log('player-guess-ships')
+        wallet = (
+          <div className='wallet-container'>
+            <div className='guide-text'>Guess where you think your opponent placed their ships. You must select 3 spaces.</div>
             <Grid shipSelections={this.shipSelections} type="guess" />
-            <Button onClick={this.submitGuess}>Submit</Button>
+            <div style={{margin: '2vw'}}>
+              {this.state.shipSubmit
+                ? <Button onClick={this.submitGuess}>Submit</Button>
+                : <Button disabled>Submit</Button>
+              }
+            </div>
           </div>
         )
         break
       case 'submitted-selection':
         if (globals.DEBUG) console.log('submitted-selection')
-        wallet = <div className='wallet-container'>{balance}<br /> waiting for guess...</div>
+        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for guess...</div></div>
         break
       case 'submitted-guess':
         if (globals.DEBUG) console.log('submitted-guess')
-        wallet = <div className='wallet-container'>{balance}<br /> waiting for outcome...</div>
+        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for outcome...</div></div>
         break
       case 'outcome':
         if (globals.DEBUG) console.log('outcome')
         wallet = (
           <div className='wallet-container'>
-            {balance}
-            {this.state.outcome}
+            <this.OutcomeContainer />
+            <Button variant='success' onClick={this.handleReset}>Reset</Button>
           </div>
         )
-      break
+        break
+      case 'timeout':
+        if (globals.DEBUG) console.log('outcome')
+        wallet = (
+          <div className='wallet-container'>
+            <div className='guide-text'>Opponent did not respond in time.</div>
+            <Button variant='success' onClick={this.handleReset}>Reset</Button>
+          </div>
+        )
+        break
     }
     return (
       <div className="App">
         <div className="header">
           <h1 style={{marginLeft: "1%", background: 'inherit'}}>Battleship</h1>
           <div style={{marginRight: "1%", background: 'inherit'}}>
-            <img width="40px" height="40px" style={{padding: "1vh", background: 'inherit'}} src={algorandLogo} />
+            <img width="40px" height="40px" style={{marginRight: '1rem', background: 'inherit'}} src={algorandLogo} />
             <img width="50px" height="50px" style={{background: 'inherit'}} src={reachLogoVertical} />
           </div>
         </div>
-        <div className="wallet">{wallet}</div>
-        {/* <Description /> */}
-        {grid}
+        <div className="wallet">
+          <this.BalanceContainer />
+          {wallet}
+          {this.state.showCopyAlert ? <div>Copied!</div> : ''}
+        </div>
+        {this.state.status === 'landing' ? <Description /> : ''}
         <div className="footer-container">
-          <div className="footer">hi</div>
+          <div className="footer">footer</div>
         </div>
       </div>
     )

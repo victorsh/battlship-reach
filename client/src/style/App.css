@@ -2,13 +2,12 @@
   width: 20vw;
 }
 
-.fund-input {
-  height: 3vh;
-  width: 4vh;
+.button-style {
+  margin: 0.5vw;
 }
 
-.value {
-  width: 20px;
+.guide-text {
+  margin: 1vw;
 }
 
 .header {
@@ -29,11 +28,29 @@
 }
 
 .description {
-  background-color: #ccc;
+  background: rgb(79, 109, 136);
+  border-radius: 10px;
+  margin: 0 auto;
+  margin-top: 2vh;
+  padding: 2vw;
+  width: 60vw;
 }
 
 .balance {
-  margin-right: 2vh;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgb(53, 53, 53);
+  color: rgb(53, 53, 53);
+  font-size: 20px;
+  margin: 0.5vw;
+}
+
+.connect-wallet {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  vertical-align: center;
+  align-items: center;
 }
 
 .wallet-container {
@@ -47,9 +64,11 @@
 
 .wallet {
   margin: 0 auto;
-  width: 60%;
-  margin-top: 10%;
+  width: 60vw;
+  margin-top: 2%;
   padding: 1vh;
+  background: rgb(59, 127, 167);
+  border-radius: 10px;
 }
 
 .footer-container {
@@ -65,7 +84,6 @@
   margin: 0 auto;
   width: 80%;
   height: 5vh;
-  background-color: #555555;
 }
 
 /* React Generated */

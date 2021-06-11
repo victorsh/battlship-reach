@@ -2,10 +2,11 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
 require('dotenv').config()
 
-module.exports = {
-  mode: 'development',
+var config = {
   entry: {
     index: './src/index.js',
   },
@@ -18,7 +19,8 @@ module.exports = {
   devServer: {
     port: process.env.DEV_PORT,
     watchContentBase: true,
-    hot: true
+    hot: true,
+    http2: true
   },
   resolve: {
     extensions: ['.js', '.ts', '.mjs', '.json', '.wasm']
@@ -47,7 +49,23 @@ module.exports = {
     ]
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: './src/index.html' }),
-    new MiniCssExtractPlugin()
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, './src/index.html')
+    }),
+    new MiniCssExtractPlugin(),
+    new FaviconsWebpackPlugin(path.resolve(__dirname, './src/assets/favicon.ico')),
+    new WebpackManifestPlugin({ fileName: path.resolve(__dirname, './src/assets/manifest.json')})
   ],
+}
+
+module.exports = (env, argv) => {
+  if (argv.mode === 'development') {
+    config.devtool = 'source-map'
+  }
+
+  if (argv.mode === 'production') {
+    //
+  }
+
+  return config
 }

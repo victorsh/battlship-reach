@@ -13,9 +13,9 @@
 }
 
 .grid-col {
-  padding: 10px;
-  width: 10em;
-  height: 10em;
+  padding: 5vw;
+  width: 10vw;
+  height: 10vw;
   justify-content: center;
   border: 1px solid black;
 }
@@ -25,6 +25,7 @@
 }
 
 .grid-col-unselected {
+  background: rgb(216, 243, 243);
   background: #789;
 }
 

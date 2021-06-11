@@ -1,24 +1,4 @@
 /*
-  1. Deployer sets the wager
-  2. Attacher accepts or rejects the wager.
-  3. Attacher selects where to place ships. Deployer does not know.
-  4. Deployer selects where to place ships. Attacher does not know.
-  5. Deployer and Attacher take turns guessing where the opponents battleships are.
-  6. First to sink opposing battleships wins.
-  7. Funds are transferred to winner.
-*/
-
-/*
-  1. Deployer sets the wager
-  2. Attacher accepts or rejects the wager.
-  3. Attacher selects where to place ships. Deployer does not know.
-  4. Deployer selects where to place ships. Attacher does not know.
-  5. Deployer and Attacher guess their opponents peice ship locations until all ships are found.
-  6. The number of turns taken is then used to determine the winner.
-  7. Funds are transferred to winner.
-*/
-
-/*
   1. A & B Select their ship locations.
   2. Locations for each are made into commitments.
   3. A & B have X number of guesses out of Y grid selections.
@@ -26,13 +6,9 @@
   5. If a Draw occurs, the game starts over at (1).
 */
 
-/*
-  There can be a DRAW
-*/
-
 'reach 0.1';
 
-const GRID_SIZE = 16;
+const GRID_SIZE = 9;
 const ACCEPT_WAGER_DEADLINE = 10;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
@@ -56,7 +32,8 @@ const player = {
   seeOutcome: Fun([UInt], Null),
   informTimeout: Fun([], Null),
   selectShips: Fun([], Array(UInt, GRID_SIZE)),
-  guessShips: Fun([], Array(UInt, GRID_SIZE))
+  guessShips: Fun([], Array(UInt, GRID_SIZE)),
+  loadingResult: Fun([UInt], Null)
 };
 const deployer = {
   ...player,
@@ -91,10 +68,16 @@ export const main = Reach.App(
     B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
 
     // -> ON DRAW LOOP STARTS HERE
-    var outcome = DRAW;
+    var [ loopCount, outcome ] = [ 0, DRAW ];
     invariant(balance() == 2 * wager && isOutcome(outcome));
     while (outcome == DRAW) {
       commit();
+
+      if (outcome == DRAW && loopCount > 0) {
+        each([A, B], () => {
+          interact.seeOutcome(outcome);
+        });
+      }
 
       // A selects locations for ships and stores it in contract private.
       A.only(() => {
@@ -151,7 +134,14 @@ export const main = Reach.App(
       var [ x, countA, countB ] = [ 0, 0, 0 ];
       invariant(balance() == wager * 2);
       while(x < GRID_SIZE) {
+        each([A, B], () => {
+          interact.loadingResult(x);
+        });
         commit();
+        // B is always the first to pick up this task.
+        // This was originally set to Anybody.publish()
+        // but this caused A to Post bad request (400)
+        // When A tried to pick up the task.
         B.publish();
 
         [ x, countA, countB ] = [
@@ -163,8 +153,11 @@ export const main = Reach.App(
         continue;
       }
 
-      outcome = winner(countA, countB);
-      // outcome = A_WINS;
+      [ loopCount, outcome ] = [
+        loopCount + 1,
+        winner(countA, countB)
+      ];
+
       continue;
     }
 

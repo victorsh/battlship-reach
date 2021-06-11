@@ -15,17 +15,20 @@ class Grid extends React.Component {
     e.preventDefault();
     const hold = this.state.style;
     if (this.state.style[e.target.dataset.mssg] === 'grid-col-unselected') {
-      console.log(this.max_selections)
+      if (globals.DEBUG) console.log(this.max_selections)
       if (frequencyOf(hold, 'grid-col-selected') < this.max_selections) {
         hold[e.target.dataset.mssg] = 'grid-col-selected';
         this.setState({style: hold});
-        this.props.shipSelections(e.target.dataset.mssg, this.props.type);
+        const allowSubmit = frequencyOf(hold, 'grid-col-selected') === 3 ? true : false
+        this.props.shipSelections(e.target.dataset.mssg, this.props.type, allowSubmit);
       }
     } else if (this.state.style[e.target.dataset.mssg] === 'grid-col-selected') {
       if (frequencyOf(hold, 'grid-col-unselected') >= globals.GRID_SIZE - this.max_selections) {
         hold[e.target.dataset.mssg] = 'grid-col-unselected';
         this.setState({style: hold});
-        this.props.shipSelections(e.target.dataset.mssg, this.props.type);
+        const allowSubmit = frequencyOf(hold, 'grid-col-selected') === 3 ? true : false
+        console.log('allow submit', allowSubmit)
+        this.props.shipSelections(e.target.dataset.mssg, this.props.type, allowSubmit);
       }
     } else {
       console.error('something went wrong with ship selection in Grid');

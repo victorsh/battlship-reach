@@ -1,6 +1,9 @@
 import { loadStdlib } from '@reach-sh/stdlib';
 import * as backend from './build/index.main.mjs';
 
+const draw_array = new Array(16).fill(0);
+draw_array[0] = draw_array[1] = draw_array[2] = 1;
+
 (async () => {
   console.log('Starting Battleship...');
 
@@ -18,12 +21,15 @@ import * as backend from './build/index.main.mjs';
   const ctcDeployer = accDeployer.deploy(backend);
   const ctcAttacher = accAttacher.attach(backend, ctcDeployer.getInfo());
 
-  const GRID_SIZE = 16;
+  const GRID_SIZE = 9;
 
   const Player = (Who) => ({
     ...stdlib.hasRandom,
     seeOutcome: (outcome) => {
       console.log(`${Who} saw outcome ${outcome}`);
+    },
+    loadingResult: (x) => {
+      console.log(`Loading Result: ${x} of ${GRID_SIZE}`)
     },
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);

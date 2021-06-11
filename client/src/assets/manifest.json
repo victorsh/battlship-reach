@@ -1,0 +1,7 @@
+{
+  "short_name": "Battleship",
+  "name": "Battleship Algorand",
+  "scope": "/",
+  "start_url": "/",
+  "description": "A battleship game running on Algorand."
+}
