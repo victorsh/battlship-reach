@@ -37,7 +37,8 @@ class App extends React.Component {
       submitSelection: null,
       submitGuess: null,
       showCopyAlert: false,
-      shipSubmit: false
+      shipSubmit: false,
+      loadingResult: 0,
     }
   }
 
@@ -56,7 +57,7 @@ class App extends React.Component {
     if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
 
     let balance = await this.state.reach.balanceOf(account)
-    balance = this.state.reach.formatCurrency(balance, 4)
+    balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
 
     this.setState({account, address, balance, status: 'connected'})
   }
@@ -70,7 +71,7 @@ class App extends React.Component {
       return
     }
 
-    if (Number(fundAmount) < 0.0001) {
+    if (Number(fundAmount) < globals.MIN_VALUE) {
       alert('Fund amount must be a value greater than 0')
       this.setState({fundAmount: ''})
       return
@@ -81,7 +82,7 @@ class App extends React.Component {
       const faucet = await this.state.reach.getFaucet()
       await this.state.reach.transfer(faucet, this.state.account, this.state.reach.parseCurrency(this.state.fundAmount))
       let balance = await this.state.reach.balanceOf(this.state.account)
-      balance = this.state.reach.formatCurrency(balance, 4)
+      balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
       this.setState({balance, loadingFaucet: false, fundAmount: 0})
       this.setState({fundAmount: ''})
     } catch (e) {
@@ -127,32 +128,75 @@ class App extends React.Component {
     await backend.attacher(ctc, this.Attacher())
     if (globals.DEBUG) console.log('Attacher has been attached to contract.')
   }
+  handleDraw = () => {
+    if (globals.DEBUG) console.log('handle draw')
+
+    this.setState({
+      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      // TODO: set these methods to null after executing.
+      acceptTerms: null,
+      submitSelection: null,
+      submitGuess: null,
+      shipSubmit: false,
+    })
+  } 
+  handleReset = () => {
+    if (globals.DEBUG) console.log('handle reset')
+
+    this.setState({
+      status: 'connected',
+      player: null,
+      fundAmount: '',
+      wager: '1',
+      attachInfo: '',
+      showCopyAlert: false,
+      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
+      acceptTerms: null,
+      submitSelection: null,
+      submitGuess: null,
+      shipSubmit: false,
+      outcome: null,
+    })
+  }
 
   // Method trigger on player interaction
-  copyContractInfo = (e) => {
-    e.preventDefault()
+  copyContractInfo = () => {
     if (globals.DEBUG) console.log('Deployer copied contract info to clipboard.')
     navigator.clipboard.writeText(this.state.attachInfo)
     this.setState({showCopyAlert: true})
     setTimeout(() => this.setState({showCopyAlert: false}), 3000)
   }
-  acceptTerms = (e) => {
-    e.preventDefault()
+  acceptTerms = () => {
     if (globals.DEBUG) console.log('Attacher has clicked acceptTerms().')
-    this.state.acceptTerms()
-    this.setState({status: 'attacher-wait-deployer'})
+    try {
+      this.state.acceptTerms()
+      this.setState({status: 'attacher-wait-deployer', acceptTerms: null})
+    } catch (e) {
+      if (globals.DEBUG) console.log(e)
+      this.handleReset()
+    }
   }
-  submitSelection = (e) => {
-    e.preventDefault()
+  submitSelection = () => {
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitSelection().`)
-    this.state.submitSelection(this.state.selectedShips)
-    this.setState({status: 'submitted-selection', shipSubmit: false})
+    try {
+      this.state.submitSelection(this.state.selectedShips)
+      this.setState({status: 'submitted-selection', submitSelection: null, shipSubmit: false})
+    } catch (e) {
+      if (globals.DEBUG) console.log(e)
+      this.handleReset()
+    }
   }
-  submitGuess = (e) => {
-    e.preventDefault()
+  submitGuess = () => {
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitGuess().`)
-    this.state.submitGuess(this.state.guessedShips)
-    this.setState({status: 'submitted-guess', shipSubmit: false})
+    try {
+      this.state.submitGuess(this.state.guessedShips)
+      this.setState({status: 'submitted-guess', submitGuess: null, shipSubmit: false})
+    } catch (e) {
+      if (globals.DEBUG) console.log(e)
+      this.handleReset()
+    }
   }
 
   /* passed to grid */
@@ -182,47 +226,13 @@ class App extends React.Component {
   }
 
   OutcomeContainer = () => {
+    if (globals.DEBUG) console.log(`Returning Outcome Container with outcome: ${this.state.outcome}`)
     switch(this.state.outcome) {
-      case 0: return <div>{this.state.player === 'attacher' ? 'You win!' : 'You lose!'}</div> // attacher wins
-      case 1: return <div>{'Draw! Restarting game to ship select.'}</div>
-      case 2: return <div>{this.state.player === 'deployer' ? 'You win!' : 'You lose!'}</div> // deployer wins
+      case '0': return <div>{this.state.player === 'attacher' ? globals.texts.win : globals.text.lose}</div> // attacher wins
+      case '1': return <div>{'Draw! Restarting game to ship select. You should not be seeing this.'}</div>
+      case '2': return <div>{this.state.player === 'deployer' ? globals.texts.win : globals.text.lose}</div> // deployer wins
       default: return <div>Something went wrong :(</div>
     }
-  }
-
-  handleDraw = () => {
-    if (globals.DEBUG) console.log('handle draw')
-
-    this.setState({
-      status: 'player-select-ships',
-      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
-      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
-      acceptTerms: null,
-      submitSelection: null,
-      submitGuess: null,
-      shipSubmit: false,
-      outcome: null,
-    })
-  } 
-
-  handleReset = () => {
-    if (globals.DEBUG) console.log('handle reset')
-
-    this.setState({
-      status: 'connected',
-      player: null,
-      fundAmount: '',
-      wager: '1',
-      attachInfo: '',
-      showCopyAlert: false,
-      selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
-      guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
-      acceptTerms: null,
-      submitSelection: null,
-      submitGuess: null,
-      shipSubmit: false,
-      outcome: null,
-    })
   }
 
   /* PLAYER OBJECTS */
@@ -231,12 +241,16 @@ class App extends React.Component {
     seeOutcome: async (outcome) => {
       if (globals.DEBUG) console.log(`Event outcome, player: ${this.state.player}, status: ${this.state.status}, outcome: ${outcome.toString()}`)
       let balance = await this.state.reach.balanceOf(this.state.account)
-      balance = this.state.reach.formatCurrency(balance, 4)
-      this.setState({balance, status: 'outcome', outcome: outcome.toString()})
-      setTimeout(() => this.handleDraw(), 3000)
+      balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+      if (outcome === '1') {
+        this.setState({balance, status: 'draw', outcome: outcome.toString()})
+      } else {
+        this.setState({balance, status: 'outcome', outcome: outcome.toString()})
+      }
     },
     loadingResult: async (load) => {
       if (globals.DEBUG) console.log(`Event loadingResult, player: ${this.state.player}, status: ${this.state.status}, load: ${load.toString()}`)
+      this.setState({loadingResult: load.toString()})
     },
     informTimeout: () => {
       if (globals.DEBUG) console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`)
@@ -251,7 +265,7 @@ class App extends React.Component {
 
       if (globals.DEBUG) console.log(`Select Ships method resolved. SHIPS: ${ships}`)
       // ships = mock_select()
-      ships = globals.test_array
+      // ships = globals.test_array
 
       return ships
     },
@@ -264,7 +278,7 @@ class App extends React.Component {
 
       if (globals.DEBUG) console.log(`Guess Ships method resolved. SHIPS: ${ships}`)
       // ships = mock_guess()
-      ships = globals.test_array
+      // ships = globals.test_array
 
       return ships
     }
@@ -371,8 +385,9 @@ class App extends React.Component {
         wallet = (
           <div className='wallet-container'>
             <div className='guide-text'>Waiting for attacher...</div>
-            <div style={{width: '75%', height: '100%'}}>{this.state.attachInfo}</div>
+            <div style={{width: '75%', height: '100%', overflowX: 'scroll', background: 'rgb(200, 200, 210)'}}>{this.state.attachInfo}</div>
             <Button className='button-style' variant='secondary' onClick={(e) => this.copyContractInfo(e)}>Copy</Button>
+            {this.state.showCopyAlert ? <div>Copied!</div> : ''}
           </div>
         )
         break
@@ -406,6 +421,7 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('player-select-ships')
         wallet = (
           <div className='wallet-container'>
+            {this.state.outcome === 1 ? <div className='guide-text'>Draw! Occurring in the previous round</div> : ''}
             <div className='guide-text'>Select where you would like to place your ships. You must select 3 spaces.</div>
             <Grid shipSelections={this.shipSelections} type="select" />
             <div style={{margin: '2vw'}}>
@@ -434,18 +450,18 @@ class App extends React.Component {
         break
       case 'submitted-selection':
         if (globals.DEBUG) console.log('submitted-selection')
-        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for guess...</div></div>
+        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for opponent to guess...</div></div>
         break
       case 'submitted-guess':
         if (globals.DEBUG) console.log('submitted-guess')
-        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for outcome...</div></div>
+        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for outcome...{this.state.loadingResult}/8</div></div>
         break
       case 'outcome':
         if (globals.DEBUG) console.log('outcome')
         wallet = (
           <div className='wallet-container'>
             <this.OutcomeContainer />
-            <Button variant='success' onClick={this.handleReset}>Reset</Button>
+            {this.state.outcome === 1 ? '' :  <Button variant='success' onClick={this.handleReset}>Reset</Button>}
           </div>
         )
         break
@@ -458,6 +474,13 @@ class App extends React.Component {
           </div>
         )
         break
+      case 'draw':
+        if (globals.DEBUG) console.log('draw')
+        wallet = (
+          <div className='wallet-container'>
+            <div className='guide-text'>A draw has occurred! Game resetting to ship select...</div>
+          </div>
+        )
     }
     return (
       <div className="App">
@@ -471,7 +494,6 @@ class App extends React.Component {
         <div className="wallet">
           <this.BalanceContainer />
           {wallet}
-          {this.state.showCopyAlert ? <div>Copied!</div> : ''}
         </div>
         {this.state.status === 'landing' ? <Description /> : ''}
         <div className="footer-container">
