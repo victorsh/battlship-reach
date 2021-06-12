@@ -4,7 +4,7 @@ const Description = () => {
   return (
     <div className="description">
       <p>In this version of Battleship each player starts by selecting where they would like to place their ships.
-        Each ship is the size of a single tile and can be placed anywhere on the board where is ship is not already placed.
+        Each ship is the size of a single tile and can be placed anywhere on the board where a ship is not already placed.
         After the ship locations have been selected by both players, they are submitted to the Reach backend and encrypted
         so that the actual locations are not revealed.
       </p>

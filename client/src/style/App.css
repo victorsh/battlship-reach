@@ -29,6 +29,7 @@
 
 .description {
   background: rgb(79, 109, 136);
+  color: rgb(200, 200,200);
   border-radius: 10px;
   margin: 0 auto;
   margin-top: 2vh;
@@ -46,11 +47,7 @@
 }
 
 .connect-wallet {
-  display: flex;
-  justify-content: space-between;
-  flex-direction: column;
-  vertical-align: center;
-  align-items: center;
+
 }
 
 .wallet-container {

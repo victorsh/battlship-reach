@@ -37,11 +37,13 @@ const player = {
 };
 const deployer = {
   ...player,
-  wager: UInt
+  wager: UInt,
+  // informReject: Fun([UInt], Null)
 };
 const attacher = {
   ...player,
   acceptWager: Fun([UInt], Null)
+  // acceptWager: Fun([UInt], [Boolean])
 };
 
 export const main = Reach.App(
@@ -64,7 +66,14 @@ export const main = Reach.App(
     // B accepts wager given an amount of time to accept
     B.only(() => {
       interact.acceptWager(wager);
+      // const accepted = interact.acceptWager(wager); // ADD BOOLEAN TO REJECT WAGER
     });
+    // if (accepted) {
+      B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+    // } else { 
+      // A.only(() => { interact.informReject() })}
+      // exit();
+    // }
     B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
 
     // -> ON DRAW LOOP STARTS HERE

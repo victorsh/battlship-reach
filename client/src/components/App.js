@@ -1,6 +1,6 @@
 import React from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
-import { Button, Alert, FormControl, InputGroup } from 'react-bootstrap'
+import { Button, FormControl, InputGroup } from 'react-bootstrap'
 
 import Description from './Description'
 import Grid from './Grid'
@@ -12,8 +12,7 @@ import mock_select from '../lib/mock-select'
 
 import '../style/app.css'
 
-import algorandLogo from '../assets/algorand-algo-logo.svg'
-import reachLogoVertical from '../assets/reach-vertical.svg'
+import algorandLogo from '../assets/algorand-algo-logo.png'
 
 class App extends React.Component {
   constructor(props) {
@@ -38,13 +37,21 @@ class App extends React.Component {
       submitGuess: null,
       showCopyAlert: false,
       shipSubmit: false,
+      attachingContract: false,
       loadingResult: 0,
+      errorMessage: ''
     }
   }
 
   async componentDidMount() {
     const reach = await loadStdlib('ALGO')
+    await reach.setProviderByName('TestNet')
+    await reach.setSignStrategy('AlgoSigner')
     const { standardUnit } = reach
+
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (globals.DEBUG) console.log(message, source, lineno, colno, error)
+    }
 
     this.setState({status: 'landing', reach: reach, standardUnit: standardUnit})
   }
@@ -52,14 +59,20 @@ class App extends React.Component {
   connectAccount = async (e) => {
     e.preventDefault()
 
-    const account = await this.state.reach.getDefaultAccount()
-    const address = await this.state.reach.formatAddress(account.getAddress())
-    if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
-
-    let balance = await this.state.reach.balanceOf(account)
-    balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
-
-    this.setState({account, address, balance, status: 'connected'})
+    try {
+      const account = await this.state.reach.getDefaultAccount()
+      const address = await this.state.reach.formatAddress(account.getAddress())
+      if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
+  
+      let balance = await this.state.reach.balanceOf(account)
+      balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+  
+      this.setState({account, address, balance, status: 'connected'})
+    } catch (e) {
+      if (globals.DEBUG) console.log(e)
+      this.setState({status: 'landing', errorMessage: e})
+      setTimeout(() => this.setState({errorMessage: ''}), 5000)
+    }
   }
   fundAccount = async (e) => {
     e.preventDefault()
@@ -87,7 +100,8 @@ class App extends React.Component {
       this.setState({fundAmount: ''})
     } catch (e) {
       if (globals.DEBUG) console.log('failed to get faucet: ', e)
-      this.setState({loadingFaucet: false})
+      this.setState({loadingFaucet: false, errorMessage: e})
+      setTimeout(() => { this.setState({errorMessage: ''}); console.log('ERROR TIMEOUT FAUCET')}, 5000)
     }
   }
   deployAndWager = async (e) => {
@@ -125,7 +139,9 @@ class App extends React.Component {
     if (globals.DEBUG) console.log(`Contract info: ${parsed_info.toString()}`)
     const ctc = await this.state.account.attach(backend, parsed_info)
     if (globals.DEBUG) console.log('Contract found and attached to backend.')
+    this.setState({attachingContract: true})
     await backend.attacher(ctc, this.Attacher())
+    this.setState({attachingContract: false})
     if (globals.DEBUG) console.log('Attacher has been attached to contract.')
   }
   handleDraw = () => {
@@ -143,6 +159,7 @@ class App extends React.Component {
   } 
   handleReset = () => {
     if (globals.DEBUG) console.log('handle reset')
+    setTimeout(() => this.setState({errorMessage: ''}), 5000)
 
     this.setState({
       status: 'connected',
@@ -160,6 +177,9 @@ class App extends React.Component {
       outcome: null,
     })
   }
+  handleFaucetError = () => {
+    setTimeout(() => this.setState({errorMessage: ''}), 5000)
+  }
 
   // Method trigger on player interaction
   copyContractInfo = () => {
@@ -175,6 +195,7 @@ class App extends React.Component {
       this.setState({status: 'attacher-wait-deployer', acceptTerms: null})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
+      this.setState({errorMessage: 'Failed to accept terms, something went wrong :('})
       this.handleReset()
     }
   }
@@ -185,6 +206,7 @@ class App extends React.Component {
       this.setState({status: 'submitted-selection', submitSelection: null, shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
+      this.setState({errorMessage: 'Failed to submit selections, something went wrong :('})
       this.handleReset()
     }
   }
@@ -195,6 +217,7 @@ class App extends React.Component {
       this.setState({status: 'submitted-guess', submitGuess: null, shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
+      this.setState({errorMessage: 'Failed to submit guesses, something went wrong :('})
       this.handleReset()
     }
   }
@@ -228,9 +251,9 @@ class App extends React.Component {
   OutcomeContainer = () => {
     if (globals.DEBUG) console.log(`Returning Outcome Container with outcome: ${this.state.outcome}`)
     switch(this.state.outcome) {
-      case '0': return <div>{this.state.player === 'attacher' ? globals.texts.win : globals.text.lose}</div> // attacher wins
+      case '0': return <div>{this.state.player === 'attacher' ? globals.texts.win : globals.texts.lose}</div> // attacher wins
       case '1': return <div>{'Draw! Restarting game to ship select. You should not be seeing this.'}</div>
-      case '2': return <div>{this.state.player === 'deployer' ? globals.texts.win : globals.text.lose}</div> // deployer wins
+      case '2': return <div>{this.state.player === 'deployer' ? globals.texts.win : globals.texts.lose}</div> // deployer wins
       default: return <div>Something went wrong :(</div>
     }
   }
@@ -314,8 +337,9 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('landing')
         wallet = (
           <div className='connect-wallet'>
-            <div style={{fontSize: '1.5em'}}>Connect you Algorand wallet to get started.</div>
-            <Button style={{marginTop: '5%'}}variant='success' onClick={this.connectAccount}>Connect Wallet</Button>
+            <div style={{fontSize: '1.5em', marginTop: '1.5%', marginBottom: '2%'}}>Connect you Algorand wallet to get started.</div>
+            <Button style={{marginTop: '2%', marginBottom:'1.5%'}} variant='success' onClick={this.connectAccount}>Connect Wallet</Button>
+            <div className='guide-text'>{this.state.errorMessage.toString()}</div>
           </div>
         )
         break
@@ -323,6 +347,7 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('connected')
         wallet = (
           <div className='wallet-container'>
+            <div className='guide-text'>{this.state.errorMessage.toString()}</div>
             <div className='fund'>
               <InputGroup size='sm' className='mb-3'>
                 <FormControl
@@ -395,6 +420,7 @@ class App extends React.Component {
         if (globals.DEBUG) console.log('attacher-start')
         wallet = (
           <div className='wallet-container'>
+            <div className='guide-text'>Input the contract from a deployer. {this.state.attachingContract ? 'Loading...' : ''}</div>
             <textarea placeholder="Contract Info: {}" onChange={(e) => this.setState({attachInfo: e.target.value})}/>
             <Button className='button-style' variant='success' onClick={this.attachContract}>Submit</Button>
           </div>
@@ -405,7 +431,11 @@ class App extends React.Component {
         wallet = (
           <div className='wallet-container'>
             <div className='guide-text'>Accept a wager of {this.state.wager} ALGO?</div>
-            <Button className='button-style' variant='success' onClick={this.acceptTerms}>Accept</Button>
+            <div style={{display: 'flex', width: '-1%', margin: '0 auto'}}>
+              <Button className='button-style' variant='success' onClick={this.acceptTerms}>Accept</Button>
+              <Button className='button-style' variant='danger' onClick={() => this.setState({status: 'attacher-start'})}>Reject</Button>
+              {/* TODO: Send notification to Deployer that request was rejected. */}
+            </div>
           </div>
         )
         break
@@ -488,7 +518,7 @@ class App extends React.Component {
           <h1 style={{marginLeft: "1%", background: 'inherit'}}>Battleship</h1>
           <div style={{marginRight: "1%", background: 'inherit'}}>
             <img width="40px" height="40px" style={{marginRight: '1rem', background: 'inherit'}} src={algorandLogo} />
-            <img width="50px" height="50px" style={{background: 'inherit'}} src={reachLogoVertical} />
+            <img width='40px' height='40px' src='https://reach.sh/header/logo.svg' />
           </div>
         </div>
         <div className="wallet">
