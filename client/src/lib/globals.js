@@ -4,7 +4,7 @@ const globals = {
   GRID_SIZE: 9,
   CURRENCY_FORMAT: 4,
   MIN_VALUE: 0.0001,
-  NETWORK_STATE: 'test', //devnet, testnet, live
+  NETWORK_STATE: 'devnet', //devnet, testnet, live
   test_array: [1, 0, 0, 1, 0, 0, 1, 0, 0],
 
   sleep: (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds)),

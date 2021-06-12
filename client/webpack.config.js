@@ -3,7 +3,7 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
-const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
+// const { WebpackManifestPlugin } = require('webpack-manifest-plugin')
 require('dotenv').config()
 
 var config = {
@@ -53,8 +53,21 @@ var config = {
       template: path.resolve(__dirname, './src/index.html')
     }),
     new MiniCssExtractPlugin(),
-    new FaviconsWebpackPlugin(path.resolve(__dirname, './src/assets/favicon.ico')),
-    new WebpackManifestPlugin({ fileName: path.resolve(__dirname, './src/assets/manifest.json')})
+    new FaviconsWebpackPlugin({
+      logo: path.resolve(__dirname, './src/assets/favicon.png'),
+      mode: 'light',
+      devMode: 'webapp',
+      favicons: {
+        appName: 'battleship-algorand',
+        appDescription: 'A Battleship game built on the Algorand Network using Reach.',
+        developerName: 'Victor Shahbazian',
+        icons : {
+          coast: false,
+          yandex: false
+        }
+      }
+    }),
+    // new WebpackManifestPlugin({ fileName: path.resolve(__dirname, './src/assets/manifest.json')})
   ],
 }
 

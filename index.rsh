@@ -81,12 +81,6 @@ export const main = Reach.App(
     while (outcome == DRAW) {
       commit();
 
-      if (outcome == DRAW && loopCount > 0) {
-        each([A, B], () => {
-          interact.seeOutcome(outcome);
-        });
-      }
-
       // A selects locations for ships and stores it in contract private.
       A.only(() => {
         const _shipsA = interact.selectShips();
@@ -206,6 +200,12 @@ export const main = Reach.App(
       const countA = countA_0 + countA_1 + countA_2 + countA_3 + countA_4 + countA_5 + countA_6 + countA_7 + countA_8;
       const countB = countB_0 + countB_1 + countB_2 + countB_3 + countB_4 + countB_5 + countB_6 + countB_7 + countB_8;
 
+      const outcome_hold = winner(countA, countB);
+
+      each([A, B], () => {
+        interact.seeOutcome(outcome_hold);
+      });
+
       [ loopCount, outcome ] = [
         loopCount + 1,
         winner(countA, countB)
@@ -217,10 +217,6 @@ export const main = Reach.App(
     assert(outcome == A_WINS || outcome == B_WINS);
     transfer(2 * wager).to(outcome == A_WINS ? A : B);
     commit();
-
-    each([A, B], () => {
-      interact.seeOutcome(outcome);
-    });
 
     exit();
   }

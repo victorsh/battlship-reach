@@ -53,8 +53,11 @@ class App extends React.Component {
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     const reach = await loadStdlib('ALGO')
-    await reach.setProviderByName('TestNet')
-    await reach.setSignStrategy('AlgoSigner')
+    if (globals.NETWORK_STATE === 'testnet') {
+      await reach.setProviderByName('TestNet')
+      await reach.setSignStrategy('AlgoSigner')
+    }
+
     const { standardUnit } = reach
 
     window.onerror = (message, source, lineno, colno, error) => {
@@ -274,7 +277,7 @@ class App extends React.Component {
     if (globals.DEBUG) console.log(`Returning Outcome Container with outcome: ${this.state.outcome}`)
     switch(this.state.outcome) {
       case '0': return <div>{this.state.player === 'attacher' ? globals.texts.win : globals.texts.lose}</div> // attacher wins
-      case '1': return <div>{'Draw! Restarting game to ship select. You should not be seeing this.'}</div>
+      case '1': return <div>{'Draw! Restarting game to ship select.'}</div>
       case '2': return <div>{this.state.player === 'deployer' ? globals.texts.win : globals.texts.lose}</div> // deployer wins
       default: return <div>Something went wrong :(</div>
     }
@@ -522,7 +525,7 @@ class App extends React.Component {
         wallet = (
           <div className='wallet-container'>
             <this.OutcomeContainer />
-            {this.state.outcome === 1 ? '' : <Button variant='success' onClick={this.handleReset}>Reset</Button>}
+            {this.state.outcome === '1' ? '' : <Button variant='success' onClick={this.handleReset}>Reset</Button>}
           </div>
         )
         break

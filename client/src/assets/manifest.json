@@ -1,7 +1,13 @@
 {
-  "short_name": "Battleship",
-  "name": "Battleship Algorand",
-  "scope": "/",
-  "start_url": "/",
-  "description": "A battleship game running on Algorand."
+  "index.css": "/index.css",
+  "index.js": "/index.bundle.js",
+  "assets/favicon.ico": "/assets/favicon.ico",
+  "index.html": "/index.html",
+  "algorand-algo-logo.png": "/830a4675eac715c7d62d.png",
+  "assets/favicon-48x48.png": "/assets/favicon-48x48.png",
+  "assets/favicon-32x32.png": "/assets/favicon-32x32.png",
+  "assets/manifest.json": "/assets/manifest.json",
+  "assets/browserconfig.xml": "/assets/browserconfig.xml",
+  "assets/manifest.webapp": "/assets/manifest.webapp",
+  "assets/favicon-16x16.png": "/assets/favicon-16x16.png"
 }
