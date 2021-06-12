@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
 import { Button, FormControl, InputGroup } from 'react-bootstrap'
 
@@ -13,6 +13,13 @@ import mock_select from '../lib/mock-select'
 import '../style/app.css'
 
 import algorandLogo from '../assets/algorand-algo-logo.png'
+
+const handleBeforeUnload = (e) => {
+  e.preventDefault();
+  const message = 'Going back will reset the game. This feature isn\'t implemented yet.';
+  e.returnValue = message;
+  return message;
+};
 
 class App extends React.Component {
   constructor(props) {
@@ -38,15 +45,16 @@ class App extends React.Component {
       showCopyAlert: false,
       shipSubmit: false,
       attachingContract: false,
-      loadingResult: 0,
       errorMessage: ''
     }
   }
 
   async componentDidMount() {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     const reach = await loadStdlib('ALGO')
-    // await reach.setProviderByName('TestNet')
-    // await reach.setSignStrategy('AlgoSigner')
+    await reach.setProviderByName('TestNet')
+    await reach.setSignStrategy('AlgoSigner')
     const { standardUnit } = reach
 
     window.onerror = (message, source, lineno, colno, error) => {
@@ -56,18 +64,32 @@ class App extends React.Component {
     this.setState({status: 'landing', reach: reach, standardUnit: standardUnit})
   }
 
+  componentWillUnmount() {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  }
+
   connectAccount = async (e) => {
     e.preventDefault()
 
+    let balance;
     try {
-      const account = await this.state.reach.getDefaultAccount()
-      const address = await this.state.reach.formatAddress(account.getAddress())
-      if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
-  
-      let balance = await this.state.reach.balanceOf(account)
-      balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
-  
-      this.setState({account, address, balance, status: 'connected'})
+      console.log(this.state.account)
+
+      if (this.state.account === null) {
+        const account = await this.state.reach.getDefaultAccount()
+        const address = await this.state.reach.formatAddress(account.getAddress())
+        if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
+    
+        balance = await this.state.reach.balanceOf(account)
+        balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+    
+        this.setState({account, address, balance, status: 'connected'})
+      } else {
+        balance = await this.state.reach.balanceOf(this.state.account)
+        balance = this.state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+
+        this.setState({balance, status: 'connected'})
+      }
     } catch (e) {
       if (globals.DEBUG) console.log(e)
       this.setState({status: 'landing', errorMessage: e})
@@ -271,10 +293,6 @@ class App extends React.Component {
         this.setState({balance, status: 'outcome', outcome: outcome.toString()})
       }
     },
-    loadingResult: async (load) => {
-      if (globals.DEBUG) console.log(`Event loadingResult, player: ${this.state.player}, status: ${this.state.status}, load: ${load.toString()}`)
-      this.setState({loadingResult: load.toString()})
-    },
     informTimeout: () => {
       if (globals.DEBUG) console.log(`Event timeout, player: ${this.state.player}, status: ${this.state.status}`)
       this.setState({status: 'timeout'})
@@ -359,14 +377,17 @@ class App extends React.Component {
                   <Button variant='secondary' disabled>ALGO</Button>
                 </InputGroup.Append>
                 <InputGroup.Append>
-                  <Button variant='success' onClick={this.fundAccount}>Fund</Button>
+                  <Button variant='outline-success' onClick={this.fundAccount}>Fund</Button>
                 </InputGroup.Append>
               </InputGroup>
             </div>
             <div style={{width: '33%', display: 'flex', alignItems: 'baseline'}}>
               {this.state.loadingFaucet ? <div>Loading funds from faucet...</div> : null}
             </div>
-            <Button onClick={() => this.setState({status: 'select-player'})}>Play</Button>
+            <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
+              <Button variant='danger' onClick={() => this.setState({status: 'landing'})}>Back</Button>
+              <Button variant='success' onClick={() => this.setState({status: 'select-player'})}>Play</Button>
+            </div>
           </div>
         )
         break
@@ -375,9 +396,10 @@ class App extends React.Component {
         wallet = (
           <div className='wallet-container'>
             <div className='guide-text'>Select Player</div>
-            <div style={{display: 'flex', justifyContent: 'space-around', width: '80%'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', width: '40%'}}>
+              <Button variant='danger' onClick={() => this.setState({status: 'connected'})}>Back</Button>
               <Button variant='primary' onClick={() => this.setState({status: 'deployer-start', player: 'deployer'})}>Deployer</Button>
-              <Button variant='danger' onClick={() => this.setState({status: 'attacher-start', player: 'attacher'})}>Attacher</Button>
+              <Button variant='success' onClick={() => this.setState({status: 'attacher-start', player: 'attacher'})}>Attacher</Button>
             </div>
           </div>
         )
@@ -391,6 +413,7 @@ class App extends React.Component {
                 <FormControl onChange={(e) => {this.setState({wager: e.target.value})}} aria-label="Small" aria-describedby="inputGroup-sizing-sm" />
                 <InputGroup.Append>
                   <Button variant='success' onClick={this.deployAndWager}>Place Wager</Button>
+                  <Button variant='danger' onClick={() => this.setState({status: 'select-player'})}>Back</Button>
                 </InputGroup.Append>
               </InputGroup>
             </div>
@@ -411,7 +434,10 @@ class App extends React.Component {
           <div className='wallet-container'>
             <div className='guide-text'>Waiting for attacher...</div>
             <div style={{width: '75%', height: '100%', overflowX: 'scroll', background: 'rgb(200, 200, 210)'}}>{this.state.attachInfo}</div>
-            <Button className='button-style' variant='secondary' onClick={(e) => this.copyContractInfo(e)}>Copy</Button>
+            <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
+              <Button className='button-style' variant='secondary' onClick={(e) => this.copyContractInfo(e)}>Copy</Button>
+              <Button variant='danger' onClick={() => alert('Can\'t go back! Wait for timeout.')}>Back</Button>
+            </div>
             {this.state.showCopyAlert ? <div>Copied!</div> : ''}
           </div>
         )
@@ -422,7 +448,10 @@ class App extends React.Component {
           <div className='wallet-container'>
             <div className='guide-text'>Input the contract from a deployer. {this.state.attachingContract ? 'Loading...' : ''}</div>
             <textarea placeholder="Contract Info: {}" onChange={(e) => this.setState({attachInfo: e.target.value})}/>
-            <Button className='button-style' variant='success' onClick={this.attachContract}>Submit</Button>
+            <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
+              <Button variant='danger' onClick={() => this.setState({status: 'select-player'})}>Back</Button>
+              <Button className='button-style' variant='success' onClick={this.attachContract}>Submit</Button>
+            </div>
           </div>
         )
         break
@@ -454,7 +483,8 @@ class App extends React.Component {
             {this.state.outcome === 1 ? <div className='guide-text'>Draw! Occurring in the previous round</div> : ''}
             <div className='guide-text'>Select where you would like to place your ships. You must select 3 spaces.</div>
             <Grid shipSelections={this.shipSelections} type="select" />
-            <div style={{margin: '2vw'}}>
+            <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
+              <Button variant='danger' onClick={() => alert('You can\'t go back!')}>Back</Button>
               {this.state.shipSubmit
                 ? <Button onClick={this.submitSelection}>Submit</Button>
                 : <Button disabled>Submit</Button>
@@ -469,7 +499,8 @@ class App extends React.Component {
           <div className='wallet-container'>
             <div className='guide-text'>Guess where you think your opponent placed their ships. You must select 3 spaces.</div>
             <Grid shipSelections={this.shipSelections} type="guess" />
-            <div style={{margin: '2vw'}}>
+            <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
+              <Button variant='danger' onClick={() => alert('You can\'t go back!')}>Back</Button>
               {this.state.shipSubmit
                 ? <Button onClick={this.submitGuess}>Submit</Button>
                 : <Button disabled>Submit</Button>
@@ -484,14 +515,14 @@ class App extends React.Component {
         break
       case 'submitted-guess':
         if (globals.DEBUG) console.log('submitted-guess')
-        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for outcome...{this.state.loadingResult}/8</div></div>
+        wallet = <div className='wallet-container'><div className='guide-text'>Waiting for outcome...</div></div>
         break
       case 'outcome':
         if (globals.DEBUG) console.log('outcome')
         wallet = (
           <div className='wallet-container'>
             <this.OutcomeContainer />
-            {this.state.outcome === 1 ? '' :  <Button variant='success' onClick={this.handleReset}>Reset</Button>}
+            {this.state.outcome === 1 ? '' : <Button variant='success' onClick={this.handleReset}>Reset</Button>}
           </div>
         )
         break
@@ -527,7 +558,7 @@ class App extends React.Component {
         </div>
         {this.state.status === 'landing' ? <Description /> : ''}
         <div className="footer-container">
-          <div className="footer">footer</div>
+          <div className="footer">Written by Victor Shahbazian for the purpose of Reach hosted Universities Unchained hack-a-thon event.</div>
         </div>
       </div>
     )

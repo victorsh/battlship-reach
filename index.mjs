@@ -28,9 +28,6 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
     seeOutcome: (outcome) => {
       console.log(`${Who} saw outcome ${outcome}`);
     },
-    loadingResult: (x) => {
-      console.log(`Loading Result: ${x} of ${GRID_SIZE}`)
-    },
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);
     },
