@@ -45,3 +45,42 @@ Attacher saw outcome 2
 Deployer saw outcome 2
 Deployer: 10, Attacher: 10
 Deployer: 14.9999, Attacher: 4.9999
+docker build -f Dockerfile --tag=reachsh/reach-app-battleship:latest .
+/Users/vsh/bin/reach run index
+docker build -f Dockerfile --tag=reachsh/reach-app-battleship:latest .
+docker-compose -f "docker-compose.yml" run --rm reach-app-battleship-${REACH_CONNECTOR_MODE} index
+
+> @reach-sh/battleship@ index /app
+> node --experimental-modules --unhandled-rejections=strict index.mjs
+
+Starting Battleship...
+Attacher being slow
+Attacher being slow
+Attacher being slow
+Attacher being slow
+Attacher being slow
+Attacher accpeted the wager of 5
+Deployer sets ships...
+[
+  [33m1[39m, [33m1[39m, [33m1[39m, [33m0[39m, [33m1[39m,
+  [33m1[39m, [33m1[39m, [33m0[39m, [33m1[39m
+]
+Attacher sets ships...
+[
+  [33m1[39m, [33m0[39m, [33m1[39m, [33m1[39m, [33m1[39m,
+  [33m1[39m, [33m0[39m, [33m1[39m, [33m0[39m
+]
+Deployer guesses...
+[
+  [33m0[39m, [33m1[39m, [33m1[39m, [33m0[39m, [33m0[39m,
+  [33m0[39m, [33m0[39m, [33m1[39m, [33m0[39m
+]
+Attacher guesses...
+[
+  [33m1[39m, [33m0[39m, [33m1[39m, [33m0[39m, [33m1[39m,
+  [33m1[39m, [33m1[39m, [33m0[39m, [33m0[39m
+]
+Deployer saw outcome 0
+Attacher saw outcome 0
+Deployer: 10, Attacher: 10
+Deployer: 4.9999, Attacher: 14.9999
