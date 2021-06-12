@@ -69,10 +69,10 @@ export const main = Reach.App(
       // const accepted = interact.acceptWager(wager); // ADD BOOLEAN TO REJECT WAGER
     });
     // if (accepted) {
-      B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+    //   B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
     // } else { 
-      // A.only(() => { interact.informReject() })}
-      // exit();
+    //   A.only(() => { interact.informReject() })}
+    //   exit();
     // }
     B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
 
@@ -140,27 +140,84 @@ export const main = Reach.App(
       checkCommitment(commitB, saltB, shipsB);
 
       // winner = max(ships A cmpr guesses B, ships B cmpr guesses A)
-      var [ x, countA, countB ] = [ 0, 0, 0 ];
-      invariant(balance() == wager * 2);
-      while(x < GRID_SIZE) {
-        each([A, B], () => {
-          interact.loadingResult(x);
-        });
-        commit();
-        // B is always the first to pick up this task.
-        // This was originally set to Anybody.publish()
-        // but this caused A to Post bad request (400)
-        // When A tried to pick up the task.
-        B.publish();
+      // var [ x, countA, countB ] = [ 0, 0, 0 ];
+      // invariant(balance() == wager * 2);
+      // while(x < GRID_SIZE) {
+      //   each([A, B], () => {
+      //     interact.loadingResult(x);
+      //   });
+      //   commit();
+      //   // B is always the first to pick up this task.
+      //   // This was originally set to Anybody.publish()
+      //   // but this caused A to Post bad request (400)
+      //   // When A tried to pick up the task.
+      //   B.publish();
 
-        [ x, countA, countB ] = [
-          x + 1,
-          ieq(shipsB[x], guessesA[x]) ? countA + 1 : countA,
-          ieq(shipsA[x], guessesB[x]) ? countB + 1 : countB
-        ];
+      //   [ x, countA, countB ] = [
+      //     x + 1,
+      //     ieq(shipsB[x], guessesA[x]) ? countA + 1 : countA,
+      //     ieq(shipsA[x], guessesB[x]) ? countB + 1 : countB
+      //   ];
 
-        continue;
-      }
+      //   continue;
+      // }
+
+      const countA_0 = ieq(shipsB[0], guessesA[0]) ? 1 : 0;
+      const countB_0 = ieq(shipsA[0], guessesB[0]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(1);
+      });
+
+      const countA_1 = ieq(shipsB[1], guessesA[1]) ? 1 : 0;
+      const countB_1 = ieq(shipsA[1], guessesB[1]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(2);
+      });
+
+      const countA_2 = ieq(shipsB[2], guessesA[2]) ? 1 : 0;
+      const countB_2 = ieq(shipsA[2], guessesB[2]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(3);
+      });
+
+      const countA_3 = ieq(shipsB[3], guessesA[3]) ? 1 : 0;
+      const countB_3 = ieq(shipsA[3], guessesB[3]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(4);
+      });
+
+      const countA_4 = ieq(shipsB[4], guessesA[4]) ? 1 : 0;
+      const countB_4 = ieq(shipsA[4], guessesB[4]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(5);
+      });
+
+      const countA_5 = ieq(shipsB[5], guessesA[5]) ? 1 : 0;
+      const countB_5 = ieq(shipsA[5], guessesB[5]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(6);
+      });
+
+      const countA_6 = ieq(shipsB[6], guessesA[6]) ? 1 : 0;
+      const countB_6 = ieq(shipsA[6], guessesB[6]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(7);
+      });
+
+      const countA_7 = ieq(shipsB[7], guessesA[7]) ? 1 : 0;
+      const countB_7 = ieq(shipsA[7], guessesB[7]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(8);
+      });
+
+      const countA_8 = ieq(shipsB[8], guessesA[8]) ? 1 : 0;
+      const countB_8 = ieq(shipsA[8], guessesB[8]) ? 1 : 0;
+      each([A, B], () => {
+        interact.loadingResult(9);
+      });
+
+      const countA = countA_0 + countA_1 + countA_2 + countA_3 + countA_4 + countA_5 + countA_6 + countA_7 + countA_8;
+      const countB = countB_0 + countB_1 + countB_2 + countB_3 + countB_4 + countB_5 + countB_6 + countB_7 + countB_8;
 
       [ loopCount, outcome ] = [
         loopCount + 1,

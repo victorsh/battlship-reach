@@ -45,8 +45,8 @@ class App extends React.Component {
 
   async componentDidMount() {
     const reach = await loadStdlib('ALGO')
-    await reach.setProviderByName('TestNet')
-    await reach.setSignStrategy('AlgoSigner')
+    // await reach.setProviderByName('TestNet')
+    // await reach.setSignStrategy('AlgoSigner')
     const { standardUnit } = reach
 
     window.onerror = (message, source, lineno, colno, error) => {
