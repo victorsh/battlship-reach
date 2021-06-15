@@ -28,9 +28,9 @@ assert(winner(1, 1) == DRAW);
 
 const player = {
   ...hasRandom,
-  wager: UInt,
   seeOutcome: Fun([UInt], Null),
   informTimeout: Fun([], Null),
+  informReject: Fun([], Null),
   selectShips: Fun([], Array(UInt, GRID_SIZE)),
   guessShips: Fun([], Array(UInt, GRID_SIZE)),
 };
@@ -41,8 +41,8 @@ const deployer = {
 };
 const attacher = {
   ...player,
-  acceptWager: Fun([UInt], Null)
-  // acceptWager: Fun([UInt], [Boolean])
+  // acceptWager: Fun([UInt], Null)
+  acceptWager: Fun([UInt], Bool)
 };
 
 export const main = Reach.App(
@@ -55,6 +55,12 @@ export const main = Reach.App(
       });
     };
 
+    const informReject = () => {
+      each([A, B], () => {
+        interact.informReject();
+      });
+    };
+
     // A declassifies and submits wager
     A.only(() => {
       const wager = declassify(interact.wager);
@@ -64,16 +70,19 @@ export const main = Reach.App(
 
     // B accepts wager given an amount of time to accept
     B.only(() => {
-      interact.acceptWager(wager);
-      // const accepted = interact.acceptWager(wager); // ADD BOOLEAN TO REJECT WAGER
+      // interact.acceptWager(wager);
+      const accepted = declassify(interact.acceptWager(wager)); // ADD BOOLEAN TO REJECT WAGER
     });
-    // if (accepted) {
-    //   B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
-    // } else { 
-    //   A.only(() => { interact.informReject(); closeTo(a, informReject) })}
-    //   B.closeTo(a, informReject)
-    // }
-    B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+    B.publish(accepted);
+
+    if (accepted == true) {
+      commit();
+      B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
+    } else { 
+      commit();
+      closeTo(A, informReject);
+    }
+    // B.pay(wager).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(A, informTimeout));
 
     // -> ON DRAW LOOP STARTS HERE
     var [ loopCount, outcome ] = [ 0, DRAW ];
@@ -86,7 +95,7 @@ export const main = Reach.App(
         const _shipsA = interact.selectShips();
         const [_commitA, _saltA] = makeCommitment(interact, _shipsA);
         const commitA = declassify(_commitA);
-      });
+      }); 
       A.publish(commitA).timeout(ACCEPT_WAGER_DEADLINE, () => closeTo(B, informTimeout));
       commit();
       // B should not know the location of A's ships

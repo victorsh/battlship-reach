@@ -31,6 +31,9 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);
     },
+    informReject: () => {
+      console.log(`${Who} observed a reject wager`);
+    },
     selectShips: () => {
       const board = [];
       for (let i = 0; i < GRID_SIZE; i++) {
@@ -76,6 +79,7 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
               await stdlib.wait(1);
             }
             console.log(`Attacher accpeted the wager of ${fmt(amt)}`);
+            return true;
           }
         }
       }
