@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
 import { Button, FormControl, InputGroup } from 'react-bootstrap'
 
+import Header from './Header'
 import Description from './Description'
 import Grid from './Grid'
+import Rtest from './Rtest'
 
 import * as backend from '../../backend/index.main.mjs'
 import globals from '../lib/globals'
@@ -25,6 +27,8 @@ class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      reach: null,
+      standardUnit: null,
       // Player State
       account: null,
       address: null,
@@ -39,9 +43,6 @@ class App extends React.Component {
       guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
       outcome: null,
       // Player Interactions
-      acceptTerms: null,
-      submitSelection: null,
-      submitGuess: null,
       showCopyAlert: false,
       shipSubmit: false,
       attachingContract: false,
@@ -50,7 +51,7 @@ class App extends React.Component {
   }
 
   async componentDidMount() {
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     const reach = await loadStdlib('ALGO')
     if (globals.NETWORK_STATE === 'testnet') {
@@ -216,8 +217,9 @@ class App extends React.Component {
   acceptTerms = () => {
     if (globals.DEBUG) console.log('Attacher has clicked acceptTerms().')
     try {
-      this.state.acceptTerms()
-      this.setState({status: 'attacher-wait-deployer', acceptTerms: null})
+      // this.state.acceptTerms()
+      globals.resolveAcceptP()
+      this.setState({status: 'attacher-wait-deployer'})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
       this.setState({errorMessage: 'Failed to accept terms, something went wrong :('})
@@ -227,8 +229,9 @@ class App extends React.Component {
   submitSelection = () => {
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitSelection().`)
     try {
-      this.state.submitSelection(this.state.selectedShips)
-      this.setState({status: 'submitted-selection', submitSelection: null, shipSubmit: false})
+      // this.state.submitSelection(this.state.selectedShips)
+      globals.resolveSelectP(this.state.selectedShips)
+      this.setState({status: 'submitted-selection', shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
       this.setState({errorMessage: 'Failed to submit selections, something went wrong :('})
@@ -238,8 +241,9 @@ class App extends React.Component {
   submitGuess = () => {
     if (globals.DEBUG) console.log(`${this.state.player} has clicked submitGuess().`)
     try {
-      this.state.submitGuess(this.state.guessedShips)
-      this.setState({status: 'submitted-guess', submitGuess: null, shipSubmit: false})
+      // this.state.submitGuess(this.state.guessedShips)
+      globals.resolveGuessP(this.state.guessedShips)
+      this.setState({status: 'submitted-guess', shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
       this.setState({errorMessage: 'Failed to submit guesses, something went wrong :('})
@@ -304,6 +308,7 @@ class App extends React.Component {
       if (globals.DEBUG) console.log(`${Who} sets ships...`)
       let ships = await new Promise(resolveSelectP => {
         if (globals.DEBUG) console.log(`Event submit-selections, player: ${this.state.player}, status: ${this.state.status}`)
+        globals.resolveSelectP = resolveSelectP
         this.setState({status: `player-select-ships`, submitSelection: resolveSelectP})
       })
 
@@ -317,6 +322,7 @@ class App extends React.Component {
       if (globals.DEBUG) console.log(`${Who} guesses...`)
       let ships = await new Promise(resolveGuessP => {
         if (globals.DEBUG) console.log(`Event submit-guesses, player: ${this.state.player}, status: ${this.state.status}`)
+        globals.resolveGuessP = resolveGuessP
         this.setState({status: `player-guess-ships`, submitGuess: resolveGuessP})
       })
 
@@ -343,6 +349,7 @@ class App extends React.Component {
           status: ${this.state.status},
           wager: ${formattedAmt}`
         )
+        globals.resolveAcceptP = resolveAcceptP
         this.setState({status: 'attacher-accept-wager', acceptTerms: resolveAcceptP, wager: formattedAmt})
       })
     }
@@ -560,6 +567,7 @@ class App extends React.Component {
           {wallet}
         </div>
         {this.state.status === 'landing' ? <Description /> : ''}
+        {/* <Rtest /> */}
         <div className="footer-container">
           <div className="footer">Written by Victor Shahbazian for the purpose of Reach hosted Universities Unchained hack-a-thon event.</div>
         </div>

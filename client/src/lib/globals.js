@@ -16,7 +16,10 @@ const globals = {
     connectWallet: 'Connect Wallet',
     deployer: 'Deployer',
     attacher: 'Attacher'
-  }
+  },
+  resolveAcceptP: null,
+  resolveSelectP: null,
+  resolveGuessP: null
 };
 
 export default globals;
