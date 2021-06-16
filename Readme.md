@@ -7,10 +7,11 @@ Battleship written in Reach and React running on the Algorand Blockchain. This p
 
 #### Running Locally
 - `REACH_CONNECTOR_MODE=ALGO reach devnet`
-- `cd cra-client`
+- `cd client`
 - `npm i`
-- `npm start`
+- `npm run serve`
 - Go to: `https://localhost:3000`
+- Test on Algorand Testnet, set `/client/lib/globals.js` variable `NETWORK_STATE` to `testnet`
 
 #### Other Commands
 - Run reach built react client: `REACH_CONNECTOR_MODE=ALGO ./reach react`
