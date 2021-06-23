@@ -2,10 +2,10 @@ import React from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
 import { Button, FormControl, InputGroup } from 'react-bootstrap'
 
-import Header from './Header'
-import Description from './Description'
+import Header from './layout/Header'
+import Description from './layout/Description'
+import Footer from './layout/Footer'
 import Grid from './Grid'
-import Rtest from './Rtest'
 
 import * as backend from '../../backend/index.main.mjs'
 import globals from '../lib/globals'
@@ -555,22 +555,13 @@ class App extends React.Component {
     }
     return (
       <div className="App">
-        <div className="header">
-          <h1 style={{marginLeft: "1%", background: 'inherit'}}>Battleship</h1>
-          <div style={{marginRight: "1%", background: 'inherit'}}>
-            <img width="40px" height="40px" style={{marginRight: '1rem', background: 'inherit'}} src={algorandLogo} />
-            <img width='40px' height='40px' src='https://reach.sh/header/logo.svg' />
-          </div>
-        </div>
+        <Header />
         <div className="wallet">
           <this.BalanceContainer />
           {wallet}
         </div>
         {this.state.status === 'landing' ? <Description /> : ''}
-        {/* <Rtest /> */}
-        <div className="footer-container">
-          <div className="footer">Written by Victor Shahbazian for the purpose of Reach hosted Universities Unchained hack-a-thon event.</div>
-        </div>
+        <Footer />
       </div>
     )
   }

@@ -19,7 +19,7 @@ const Description = () => {
         wins. If both players have the same number of correct guesses, then no winner is determined and the game starts over.
       </p>
     </div>
-  );
+  )
 }
 
 export default Description;
