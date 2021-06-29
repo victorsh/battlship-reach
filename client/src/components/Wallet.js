@@ -16,15 +16,20 @@ const Wallet = () => {
 
   switch (state.status) {
     case 'landing': case 'connected': case 'select-player':
-      wallet = <PreGame />; break
+      wallet = <PreGame />
+      break
     case 'deployer-start': case 'deployer-wait-deploy': case 'deployer-wait-attacher':
-      wallet = <DeployerView />; break
+      wallet = <DeployerView />
+      break
     case 'attacher-start': case 'attacher-accept-wager': case 'attacher-wait-deployer':
-      wallet = <AttacherView />; break
+      wallet = <AttacherView />
+      break
     case 'player-select-ships': case 'player-guess-ships': case 'submitted-selection': case 'submitted-guess':
-      wallet = <Game />; break
+      wallet = <Game />
+      break
     case 'outcome': case 'timeout': case 'draw':
-      wallet = <PostGame />; break
+      wallet = <PostGame />
+      break
     default: wallet = <div>Wallet failed</div>
   }
 

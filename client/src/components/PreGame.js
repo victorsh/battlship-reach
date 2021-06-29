@@ -50,7 +50,7 @@ const PreGame = () => {
       return
     }
 
-    dispatcher({loadingFaucet: true})
+    dispatcher({loadingFaucet: true}, dispatch)
     try {
       const faucet = await state.reach.getFaucet()
       await state.reach.transfer(faucet, state.account, state.reach.parseCurrency(state.fundAmount))

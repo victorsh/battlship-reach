@@ -7,12 +7,7 @@ import Description from './layout/Description'
 import Header from './layout/Header'
 import Footer from './layout/Footer'
 
-import * as backend from '../../backend/index.main.mjs'
 import globals from '../lib/globals'
-import mock_guess from '../lib/mock-guess'
-import mock_select from '../lib/mock-select'
-
-import { Deployer, Attacher } from './Players'
 
 import '../style/app.css'
 
@@ -50,13 +45,6 @@ const App2 = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     }
   }, [])
-
-  const dispatchAction = (e) => {
-    e.preventDefault()
-    console.log(state)
-
-    // dispatch({type: 'SET_STATE', payload: {status: 'starting', player: 'deployer'}})
-  }
 
   return (
     <div className='App'>
