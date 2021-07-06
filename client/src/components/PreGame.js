@@ -51,17 +51,17 @@ const PreGame = () => {
     }
 
     dispatcher({loadingFaucet: true}, dispatch)
+
     try {
       const faucet = await state.reach.getFaucet()
       await state.reach.transfer(faucet, state.account, state.reach.parseCurrency(state.fundAmount))
       let balance = await state.reach.balanceOf(state.account)
       balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
-      dispatcher({balance, loadingFaucet: false, fundAmount: 0})
-      dispatcher({fundAmount: ''})
+      dispatcher({balance, loadingFaucet: false, fundAmount: 0}, dispatch)
     } catch (e) {
       if (globals.DEBUG) console.log('failed to get faucet: ', e)
-      dispatcher({loadingFaucet: false, errorMessage: e})
-      setTimeout(() => { dispatcher({errorMessage: ''}); console.log('ERROR TIMEOUT FAUCET')}, 5000)
+      dispatcher({loadingFaucet: false, errorMessage: e}, dispatch)
+      setTimeout(() => { dispatcher({errorMessage: ''}, dispatch); if (globals.DEBUG) console.log('ERROR TIMEOUT FAUCET') }, 5000)
     }
   }
 

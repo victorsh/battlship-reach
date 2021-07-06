@@ -1,11 +1,12 @@
 // https://codeburst.io/global-state-with-react-hooks-and-context-api-87019cc4f2cf
 
-import React, {createContext, useReducer} from "react";
-import Reducer from './Reducer'
+import React, {createContext, useReducer} from 'react';
 import globals from '../lib/globals'
 
 const InitialState = {
   status: 'landing',
+  reach: null,
+  standardUnit: null,
   player: null,
   account: null,
   address: null,
@@ -22,6 +23,25 @@ const InitialState = {
   shipSubmit: false,
 }
 
+const Reducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_STATE':
+      const payload = action.payload
+      return {...state, ...payload};
+    default:
+      return state
+  }
+};
+
+const Store = ({children}) => {
+  const [state, dispatch] = useReducer(Reducer, InitialState);
+  return (
+    <Context.Provider value={[state, dispatch]}>
+      {children}
+    </Context.Provider>
+  )
+};
+
 export const ResetState = {
   status: 'landing',
   player: null,
@@ -37,14 +57,9 @@ export const ResetState = {
   shipSubmit: false,
 }
 
-const Store = ({children}) => {
-  const [state, dispatch] = useReducer(Reducer, InitialState);
-  return (
-    <Context.Provider value={[state, dispatch]}>
-      {children}
-    </Context.Provider>
-  )
-};
+export const dispatcher = (dispatch, payload, reset) => {
+  typeof reset === 'undefined' ? dispatch({ type: 'SET_STATE', payload: payload }) : dispatch({ type: 'SET_STATE', payload: ResetState })
+}
 
 export const Context = createContext(InitialState);
 export default Store

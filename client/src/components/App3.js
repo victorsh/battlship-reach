@@ -1,19 +1,20 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect, useContext, useState } from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
 import { Context } from '../store/Store'
-
 import {
-  useHistory, BrowserRouter, Route, RouteComponentProps, withRouter, Switch, Link
+  useHistory, BrowserRouter, Route, RouteComponentProps, withRouter, Switch, Link, NavLink
 } from 'react-router-dom'
+import { Button } from '@material-ui/core'
+import globals from '../lib/globals'
+import '../style/app.css'
+
 
 import Wallet from './Wallet'
+import NavBar from './common/NavBar'
 import Description from './layout/Description'
 import Header from './layout/Header'
 import Footer from './layout/Footer'
 
-import globals from '../lib/globals'
-
-import '../style/app.css'
 
 const handleBeforeUnload = (e) => {
   e.preventDefault()
@@ -22,8 +23,9 @@ const handleBeforeUnload = (e) => {
   return message
 }
 
-const App2 = () => {
+const App3 = () => {
   const [state, dispatch] = useContext(Context)
+  const [joinGame, setJoinGame] = useState(false)
   // When components mounts and unmounts
   useEffect(async () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -49,15 +51,26 @@ const App2 = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     }
   }, [])
+  let join_game = false
 
   return (
-    <div className='App'>
-      <Header />
-      <Wallet />
-      <Description />
-      <Footer />
-    </div>
+    <BrowserRouter>
+      <Switch>
+        <Route exact path='/'>
+          <div className='App'>
+            <Header />
+            <NavBar />
+            <Button variant='contained' color='primary' onClick={() => {console.log('New Game')}}>New Game</Button>
+            <Button variant='contained' color='primary' onClick={() => {console.log('Join Game', joinGame); setJoinGame(true)}}>Join Game</Button>
+            {joinGame ? <ul><li>wager: 1 <Button variant='contained' color='primary' >join</Button></li></ul> : ''}
+            {joinGame ? console.log('yes') : console.log('no')}
+            <Footer />
+          </div>
+        </Route>
+      </Switch>
+    </BrowserRouter>
+    
   )
 }
 
-export default App2
+export default App3

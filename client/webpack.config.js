@@ -33,12 +33,6 @@ var config = {
         use: ['babel-loader']
       },
       {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false
-        }
-      },
-      {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, 'css-loader']
       },

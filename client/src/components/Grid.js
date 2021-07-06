@@ -27,7 +27,7 @@ class Grid extends React.Component {
         hold[e.target.dataset.mssg] = 'grid-col-unselected';
         this.setState({style: hold});
         const allowSubmit = frequencyOf(hold, 'grid-col-selected') === 3 ? true : false
-        console.log('allow submit', allowSubmit)
+        if (globals.DEBUG) console.log('allow submit', allowSubmit)
         this.props.shipSelections(e.target.dataset.mssg, this.props.type, allowSubmit);
       }
     } else {
@@ -67,6 +67,6 @@ const frequencyOf = (arr, token) => {
       token_count++;
     }
   }
-  console.log(token_count)
+  if (globals.DEBUG) console.log(token_count)
   return token_count;
 }

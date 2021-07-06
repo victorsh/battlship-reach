@@ -77,7 +77,7 @@ class App extends React.Component {
 
     let balance;
     try {
-      console.log(this.state.account)
+      if (globals.DEBUG) console.log(this.state.account)
 
       if (this.state.account === null) {
         const account = await this.state.reach.getDefaultAccount()
@@ -127,7 +127,7 @@ class App extends React.Component {
     } catch (e) {
       if (globals.DEBUG) console.log('failed to get faucet: ', e)
       this.setState({loadingFaucet: false, errorMessage: e})
-      setTimeout(() => { this.setState({errorMessage: ''}); console.log('ERROR TIMEOUT FAUCET')}, 5000)
+      setTimeout(() => { this.setState({errorMessage: ''}); if (globals.DEBUG) console.log('ERROR TIMEOUT FAUCET')}, 5000)
     }
   }
   deployAndWager = async (e) => {

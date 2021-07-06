@@ -13,6 +13,7 @@ const DEADLINE = 10;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
 const winner = (countA, countB) => countA > countB ? A_WINS : countA < countB ? B_WINS : DRAW
+
 assert(winner(1, 0) == A_WINS);
 assert(winner(0, 1) == B_WINS);
 assert(winner(1, 1) == DRAW);
