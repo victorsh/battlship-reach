@@ -11,11 +11,9 @@ import './style/index.css'
 
 ReactDom.render(
   <React.StrictMode>
-    <Store>
-      {/* <App /> */}
-      {/* <App2 /> */}
-      <App3 />
-    </Store>
+    <App />
+    {/* <App2 /> */}
+    {/* <App3 /> */}
   </React.StrictMode>,
   document.getElementById('root')
 )
