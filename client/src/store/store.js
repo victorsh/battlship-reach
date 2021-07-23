@@ -1,4 +1,17 @@
-// https://codeburst.io/global-state-with-react-hooks-and-context-api-87019cc4f2cf
+/*
+-> https://codeburst.io/global-state-with-react-hooks-and-context-api-87019cc4f2cf
+Store/Reducer has been designed to require the least amount of overhead had possible
+
+# Example usage without Dispatcher helper method
+---
+  await dispatch({
+    type: 'SET_STATE',
+    payload: {
+      status: 'landing', reach: reach, standardUnit: reach.standardUnit
+    }
+  })
+---
+*/
 
 import React, {createContext, useReducer} from 'react';
 import globals from '../lib/globals'
@@ -57,7 +70,7 @@ export const ResetState = {
   shipSubmit: false,
 }
 
-export const dispatcher = (dispatch, payload, reset) => {
+export const Dispatcher = (dispatch, payload, reset) => {
   typeof reset === 'undefined' ? dispatch({ type: 'SET_STATE', payload: payload }) : dispatch({ type: 'SET_STATE', payload: ResetState })
 }
 

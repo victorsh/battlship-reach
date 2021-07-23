@@ -2,9 +2,6 @@ import React from 'react'
 import { Context } from '../store/Store'
 
 class Player extends React.Component {
-  constructor(props) {
-    super(props)
-  }
   static contextType = Context
 
   random = () => reach.hasRandom.random()
@@ -56,9 +53,6 @@ class Player extends React.Component {
 }
 
 class Deployer extends Player {
-  constructor(props) {
-    super(props)
-  }
   static contextType = Context
   setWager(wager) {
     this.context[1]({type: 'SET_STATE', payload: {status: 'landing', wager}})
@@ -66,9 +60,6 @@ class Deployer extends Player {
 }
 
 class Attacher extends Player {
-  constructor(props) {
-    super(props)
-  }
   async acceptWager (amt) {
     const wager = this.context[0].reach.formatCurrency(amt)
     if (globals.DEBUG) console.log('Attacher received wager: ', formattedAmt)

@@ -8,6 +8,7 @@ const globals = {
   CURRENCY_FORMAT: 4,
   MIN_VALUE: 0.0001,
   NETWORK_STATE: 'devnet', //devnet, testnet, live
+  CURRENCY: 'ALGO',
   ERROR_TIMEOUT: 5000,
   test_array: [1, 0, 0, 1, 0, 0, 1, 0, 0],
   texts: {

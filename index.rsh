@@ -115,7 +115,7 @@ export const main = Reach.App(
       B.publish(saltB, shipsB);
       checkCommitment(commitB, saltB, shipsB);
 
-      // OUTCOME
+      // Determining Outcome
       const countA_0 = ieq(shipsB[0], guessesA[0]) ? 1 : 0;
       const countB_0 = ieq(shipsA[0], guessesB[0]) ? 1 : 0;
       const countA_1 = ieq(shipsB[1], guessesA[1]) ? 1 : 0;
@@ -140,13 +140,12 @@ export const main = Reach.App(
 
       const outcome_hold = winner(countA, countB);
 
+      // Send outcome to frontend
       each([A, B], () => {
         interact.seeOutcome(outcome_hold);
       });
 
-      [ outcome ] = [
-        winner(countA, countB)
-      ];
+      [ outcome ] = [ outcome_hold ];
 
       continue;
     }
