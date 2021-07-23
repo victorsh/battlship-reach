@@ -31,29 +31,33 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
     informTimeout: () => {
       console.log(`${Who} observed a timeout`);
     },
-    selectShips: () => {
-      const board = [];
+    setShips: () => {
+      const boardSelect = [];
       for (let i = 0; i < GRID_SIZE; i++) {
-        board.push(Math.random() > 0.5 ? 1 : 0);
+        boardSelect.push(Math.random() > 0.5 ? 1 : 0);
       }
       console.log(`${Who} sets ships...`);
-      console.log(board);
-      return board;
-    },
-    guessShips: () => {
-      const board = [];
+      console.log(boardSelect);
+
+      const boardGuess = [];
       let guess_count = 0;
       for (let i = 0; i < GRID_SIZE; i++) {
         if (guess_count < GRID_SIZE / 2 && Math.random() > 0.5) {
-          board.push(1);
+          boardGuess.push(1);
           guess_count++;
         } else {
-          board.push(0);
+          boardGuess.push(0);
         }
       }
       console.log(`${Who} guesses...`);
-      console.log(board);
-      return board;
+      console.log(boardGuess);
+      return [...boardSelect, ...boardGuess];
+    },
+    getShips: (res) => {
+      console.log('get ships::', Who)
+      res.forEach((num) => {
+        console.log(fmt(num))
+      })
     }
   });
 

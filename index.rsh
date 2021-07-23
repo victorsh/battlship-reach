@@ -1,14 +1,21 @@
 /*
-  1. A & B Select their ship locations.
-  2. Locations for each are made into commitments.
-  3. A & B have X number of guesses out of Y grid selections.
-  4. Winner is determined by whoever guesses the most correct ship locations.
-  5. If a Draw occurs, the game starts over at (1).
+  1. Deployer deploys
+  2. Get wager from Deployer
+  3. Deployer pays wager and publishes wager for Attacher
+  4. Attacher uses contract info to attach to contract
+  5. Attacher accepts wager
+  6. Participant A sets select and guess ships
+  7. Participant B sets select and guess ships
+  8. Participant A declassifies ships
+  9. Participant B declassifies ships
+  10. Calculate outcome
+  11. If draw go to step 6
+  12. Payout winner and end game
 */
 
 'reach 0.1';
 
-const GRID_SIZE = 9;
+const GRID_SIZE = 18;
 const DEADLINE = 10;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
@@ -21,8 +28,8 @@ const player = {
   ...hasRandom,
   seeOutcome: Fun([UInt], Null),
   informTimeout: Fun([], Null),
-  selectShips: Fun([], Array(UInt, GRID_SIZE)),
-  guessShips: Fun([], Array(UInt, GRID_SIZE)),
+  setShips: Fun([], Array(UInt, GRID_SIZE)),
+  getShips: Fun([Array(UInt, GRID_SIZE)], Null),
 };
 const deployer = {
   ...player,
@@ -49,12 +56,10 @@ export const main = Reach.App(
     });
     A.publish(wager).pay(wager);
     commit();
-
     // B accepts wager given an amount of time to accept
     B.only(() => {
       interact.acceptWager(wager);
     });
-
     B.pay(wager).timeout(DEADLINE, () => closeTo(A, informTimeout));
 
     // -> ON DRAW LOOP STARTS HERE
@@ -63,42 +68,23 @@ export const main = Reach.App(
     while (outcome == DRAW) {
       commit();
 
-      // SELECTIONS
-      // A selects locations for ships and stores it in contract private.
       A.only(() => {
-        const _shipsA = interact.selectShips();
+        const _shipsA = interact.setShips();
         const [_commitA, _saltA] = makeCommitment(interact, _shipsA);
         const commitA = declassify(_commitA);
       });
       A.publish(commitA).timeout(DEADLINE, () => closeTo(B, informTimeout));
       commit();
-      // B should not know the location of A's ships
       unknowable(B, A(_shipsA, _saltA));
 
-      // B selects locations for ships and stores them in contract public
       B.only(() => {
-        const _shipsB = interact.selectShips();
+        const _shipsB = interact.setShips();
         const [_commitB, _saltB] = makeCommitment(interact, _shipsB);
         const commitB = declassify(_commitB);
       });
       B.publish(commitB).timeout(DEADLINE, () => closeTo(A, informTimeout));
       commit();
-      // A should not know the location of B's ships
       unknowable(A, B(_shipsB, _saltB));
-
-      // GUESSES
-      // A guesses B's ship locations
-      A.only(() => {
-        const guessesA = declassify(interact.guessShips());
-      });
-      A.publish(guessesA).timeout(DEADLINE, () => closeTo(B, informTimeout));
-      commit();
-      // B guesses A's ship locations
-      B.only(() => {
-        const guessesB = declassify(interact.guessShips());
-      });
-      B.publish(guessesB).timeout(DEADLINE, () => closeTo(A, informTimeout));
-      commit();
 
       // DECLASSIFY
       // A decrypts and stores ships locations on contract public
@@ -115,32 +101,39 @@ export const main = Reach.App(
       B.publish(saltB, shipsB);
       checkCommitment(commitB, saltB, shipsB);
 
-      // Determining Outcome
-      const countA_0 = ieq(shipsB[0], guessesA[0]) ? 1 : 0;
-      const countB_0 = ieq(shipsA[0], guessesB[0]) ? 1 : 0;
-      const countA_1 = ieq(shipsB[1], guessesA[1]) ? 1 : 0;
-      const countB_1 = ieq(shipsA[1], guessesB[1]) ? 1 : 0;
-      const countA_2 = ieq(shipsB[2], guessesA[2]) ? 1 : 0;
-      const countB_2 = ieq(shipsA[2], guessesB[2]) ? 1 : 0;
-      const countA_3 = ieq(shipsB[3], guessesA[3]) ? 1 : 0;
-      const countB_3 = ieq(shipsA[3], guessesB[3]) ? 1 : 0;
-      const countA_4 = ieq(shipsB[4], guessesA[4]) ? 1 : 0;
-      const countB_4 = ieq(shipsA[4], guessesB[4]) ? 1 : 0;
-      const countA_5 = ieq(shipsB[5], guessesA[5]) ? 1 : 0;
-      const countB_5 = ieq(shipsA[5], guessesB[5]) ? 1 : 0;
-      const countA_6 = ieq(shipsB[6], guessesA[6]) ? 1 : 0;
-      const countB_6 = ieq(shipsA[6], guessesB[6]) ? 1 : 0;
-      const countA_7 = ieq(shipsB[7], guessesA[7]) ? 1 : 0;
-      const countB_7 = ieq(shipsA[7], guessesB[7]) ? 1 : 0;
-      const countA_8 = ieq(shipsB[8], guessesA[8]) ? 1 : 0;
-      const countB_8 = ieq(shipsA[8], guessesB[8]) ? 1 : 0;
+      // A: [s,s,s, s,s,s, s,s,s, g,g,g, g,g,g, g,g,g]
+      // B: [s,s,s, s,s,s, s,s,s, g,g,g, g,g,g, g,g,g]
+      const countA_0 = ieq(shipsB[0], shipsA[9]) ? 1 : 0;
+      const countB_0 = ieq(shipsA[0], shipsB[9]) ? 1 : 0;
+      const countA_1 = ieq(shipsB[1], shipsA[10]) ? 1 : 0;
+      const countB_1 = ieq(shipsA[1], shipsB[10]) ? 1 : 0;
+      const countA_2 = ieq(shipsB[2], shipsA[11]) ? 1 : 0;
+      const countB_2 = ieq(shipsA[2], shipsB[11]) ? 1 : 0;
+      const countA_3 = ieq(shipsB[3], shipsA[12]) ? 1 : 0;
+      const countB_3 = ieq(shipsA[3], shipsB[12]) ? 1 : 0;
+      const countA_4 = ieq(shipsB[4], shipsA[13]) ? 1 : 0;
+      const countB_4 = ieq(shipsA[4], shipsB[13]) ? 1 : 0;
+      const countA_5 = ieq(shipsB[5], shipsA[14]) ? 1 : 0;
+      const countB_5 = ieq(shipsA[5], shipsB[14]) ? 1 : 0;
+      const countA_6 = ieq(shipsB[6], shipsA[15]) ? 1 : 0;
+      const countB_6 = ieq(shipsA[6], shipsB[15]) ? 1 : 0;
+      const countA_7 = ieq(shipsB[7], shipsA[16]) ? 1 : 0;
+      const countB_7 = ieq(shipsA[7], shipsB[16]) ? 1 : 0;
+      const countA_8 = ieq(shipsB[8], shipsA[17]) ? 1 : 0;
+      const countB_8 = ieq(shipsA[8], shipsB[17]) ? 1 : 0;
 
       const countA = countA_0 + countA_1 + countA_2 + countA_3 + countA_4 + countA_5 + countA_6 + countA_7 + countA_8;
       const countB = countB_0 + countB_1 + countB_2 + countB_3 + countB_4 + countB_5 + countB_6 + countB_7 + countB_8;
 
       const outcome_hold = winner(countA, countB);
 
-      // Send outcome to frontend
+      A.only(() => {
+        interact.getShips(shipsA)
+      })
+      B.only(() => {
+        interact.getShips(shipsB)
+      })
+
       each([A, B], () => {
         interact.seeOutcome(outcome_hold);
       });

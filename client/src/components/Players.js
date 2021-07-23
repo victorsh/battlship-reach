@@ -5,13 +5,12 @@ class Player extends React.Component {
   static contextType = Context
 
   random = () => reach.hasRandom.random()
-
-  selectShips = async () => {
+  setShips = async () => {
     if (globals.DEBUG) console.log(`${Who} sets ships...`)
     let ships = await new Promise(resolveSelectP => {
       if (globals.DEBUG) console.log(`Event submit-selections, player: ${this.context[0].player}, status: ${this.context[0].status}`)
       globals.resolveSelectP = resolveSelectP
-      this.context[1]({status: `player-select-ships`, submitSelection: resolveSelectP})
+      this.context[1]({submitSelection: resolveSelectP})
     })
 
     if (globals.DEBUG) console.log(`Select Ships method resolved. SHIPS: ${ships}`)
@@ -20,21 +19,12 @@ class Player extends React.Component {
 
     return ships
   }
-  guessShips = async () => {
-    if (globals.DEBUG) console.log(`${Who} guesses...`)
-    let ships = await new Promise(resolveGuessP => {
-      if (globals.DEBUG) console.log(`Event submit-guesses, player: ${this.context[0].player}, status: ${this.context[0].status}`)
-      globals.resolveGuessP = resolveGuessP
-      this.context[1]({status: `player-guess-ships`, submitGuess: resolveGuessP})
+  getShips = (res) => {
+    console.log('get ships::', Who)
+    res.forEach((num) => {
+      console.log(fmt(num))
     })
-
-    if (globals.DEBUG) console.log(`Guess Ships method resolved. SHIPS: ${ships}`)
-    // ships = mock_guess()
-    // ships = globals.test_array
-
-    return ships
   }
-
   seeOutcome = async (outcome) => {
     if (globals.DEBUG) console.log(`Event outcome, player: ${this.context[0].player}, status: ${this.context[0].status}, outcome: ${outcome.toString()}`)
     let balance = await this.context[0].reach.balanceOf(this.context[0].account)
@@ -45,7 +35,6 @@ class Player extends React.Component {
       this.context[1]({balance, status: 'outcome', outcome: outcome.toString()})
     }
   }
-
   informTimeout = () => {
     if (globals.DEBUG) console.log(`Event timeout, player: ${this.context[0].player}, status: ${this.context[0].status}`)
     this.context[1]({status: 'timeout'})
@@ -71,8 +60,7 @@ class Attacher extends Player {
         wager: ${formattedAmt}`
       )
       globals.resolveAcceptP = resolveAcceptP
-      this.context[1]({status: 'attacher-accept-wager', wager})
-      
+      this.context[1]({wager})
     })
   }
 }

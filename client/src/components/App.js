@@ -52,9 +52,6 @@ const App3 = () => {
           <Route path='/game'>
             <Game />
           </Route>
-          <Route path='/outcome'>
-            <Outcomes />
-          </Route>
         </Switch>
       </BrowserRouter>
       <Footer />

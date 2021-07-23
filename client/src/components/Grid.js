@@ -6,7 +6,7 @@ class Grid extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      style: new Array(globals.GRID_SIZE).fill('grid-col-unselected') // <!! change to globals
+      style: new Array(globals.GRID_SIZE).fill('grid-col-unselected')
     }
     this.max_selections = Math.floor(globals.GRID_SIZE / 3);
   }
