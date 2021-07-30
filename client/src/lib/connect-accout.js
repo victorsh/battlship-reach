@@ -8,13 +8,14 @@ const connect_account = async (e, dispatch, state) => {
     if (globals.DEBUG) console.log(state.account)
     if (state.account === null || typeof state.account === 'undefined') {
       const account = await state.reach.getDefaultAccount()
-      const address = await state.reach.formatAddress(accout.getAddress())
+      const address = await state.reach.formatAddress(account.getAddress())
       if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
 
       let balance = await state.reach.balanceOf(account)
       balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
 
-      Dispatcher(dispatch, {status: 'connected', account, address, balance})
+      console.log('before dispatch')
+      Dispatcher(dispatch, {status: 'connected'})
     } else {
       let balance = await state.reach.balanceOf(account)
       balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
