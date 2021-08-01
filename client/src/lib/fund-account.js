@@ -16,14 +16,14 @@ const fund_account = async (e, dispatch, state) => {
     return
   }
 
-  Dispatcher(dispatch, {loadingFaucet: true})
+  Dispatcher(dispatch, {loadingFaucet: true, fundAmount: ''})
   
   try {
     const faucet = await state.reach.getFaucet()
     await state.reach.transfer(faucet, state.account, state.reach.parseCurrency(state.fundAmount))
     let balance = await state.reach.balanceOf(state.account)
     balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
-    Dispatcher(dispatch, {balance, loadingFaucet: false, fundAmount: null})
+    Dispatcher(dispatch, {balance, loadingFaucet: false, fundAmount: ''})
   } catch (e) {
     if (globals.DEBUG) console.log('failed to get faucet: ', e)
     Dispatcher(dispatch, {loadingFaucet: false, error: e})

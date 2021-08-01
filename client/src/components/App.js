@@ -13,9 +13,12 @@ import Game from './pages/Game'
 import Outcomes from './pages/Outcomes'
 
 import Header from './layout/Header'
+import Balance from './common/Balance'
 import Footer from './layout/Footer'
 
-const App3 = () => {
+import DialogSlide from './common/DialogSlide'
+
+const App = () => {
   const [state, dispatch] = useContext(Context)
 
   // When components mounts and unmounts
@@ -39,11 +42,12 @@ const App3 = () => {
 
     return () => {
     }
-  })
+  }, [])
 
   return (
     <div className='App'>
       <Header />
+      <Balance />
       <BrowserRouter>
         <Switch>
           <Route exact path='/'>
@@ -54,9 +58,10 @@ const App3 = () => {
           </Route>
         </Switch>
       </BrowserRouter>
+      <DialogSlide />
       <Footer />
     </div>
   )
 }
 
-export default App3
+export default App

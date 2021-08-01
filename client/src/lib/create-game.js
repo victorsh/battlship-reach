@@ -1,7 +1,7 @@
 import { Dispatcher } from '../store/Store'
 import { Deployer } from '../components/Players'
 import globals from './globals'
-import backend from '../../backend/index.main.mjs'
+import * as backend from '../../backend/index.main.mjs'
 
 const create_game = async (e, dispatch, state) => {
   e.preventDefault()

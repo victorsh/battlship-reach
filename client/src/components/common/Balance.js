@@ -1,11 +1,16 @@
-import React from 'react'
+import React, { useContext } from 'react'
+import { Context, Dispatcher } from '../../store/Store'
 
-const Balance = (props) => {
+const Balance = () => {
+  const [state, dispatch] = useContext(Context)
+
   return (
-    <div className="balance">
-      <span>Balance</span>
-      <span>{props.balance} {props.standardUnit}</span>
-    </div>
+    state.account !== 'landing' ?
+      <div className="balance">
+        <span>Balance</span>
+        <span>{state.balance} {state.standardUnit}</span>
+      </div>
+    : ''
   )
 }
 

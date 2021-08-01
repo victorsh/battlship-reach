@@ -1,7 +1,7 @@
 import { Dispatcher } from '../store/Store'
 import { Attacher } from '../components/Players'
 import globals from '../lib/globals'
-import backend from '../../backend/index.main.mjs'
+import * as backend from '../../backend/index.main.mjs'
 
 const join_game = (e, dispatch, state) => {
   e.preventDefault()

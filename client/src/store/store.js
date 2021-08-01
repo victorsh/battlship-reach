@@ -24,12 +24,13 @@ const InitialState = {
   account: null,
   address: null,
   balance: null,
-  fundAmount: null,
+  fundAmount: '',
   errorMessage: null,
-  attachInfo: null,
+  attachInfo: '',
   selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
   guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
   outcome: null,
+  cookieAgreementOpen: false,
   loadingFaucet: false,
   showCopyAlert: false,
   attachingContract: false,
@@ -58,9 +59,9 @@ const Store = ({children}) => {
 export const ResetState = {
   status: 'landing',
   player: null,
-  fundAmount: null,
-  errorMessage: null,
-  attachInfo: null,
+  fundAmount: '',
+  errorMessage: '',
+  attachInfo: '',
   selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
   guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
   outcome: null,
@@ -70,8 +71,8 @@ export const ResetState = {
   shipSubmit: false,
 }
 
-export const Dispatcher = (dispatch, payload, reset) => {
-  typeof reset === 'undefined' ? dispatch({ type: 'SET_STATE', payload: payload }) : dispatch({ type: 'SET_STATE', payload: ResetState })
+export const Dispatcher = async (dispatch, payload, reset) => {
+  typeof reset === 'undefined' ? await dispatch({ type: 'SET_STATE', payload: payload }) : await dispatch({ type: 'SET_STATE', payload: ResetState })
 }
 
 export const Context = createContext(InitialState);
