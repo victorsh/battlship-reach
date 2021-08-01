@@ -23,7 +23,9 @@ const create_game = async (e, dispatch, state) => {
   if (globals.DEBUG) console.log('deployer-wait-attacher')
 
   const parsedWager = state.reach.parseCurrency(state.wager)
-  backend.deployer(ctc, Deployer(parsedWager))
+  const deployer = new Deployer
+  deployer.setWager(state.wager)
+  backend.deployer(ctc, deployer)
   const ctcInfoStr = await JSON.stringify(await ctc.getInfo(), null, 2)
   Dispatcher(dispatch, {attachInfo: ctcInfoStr, status: 'deployer-wait-attacher'})
 }

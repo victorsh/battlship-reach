@@ -18,7 +18,6 @@ import create_game from '../../lib/create-game'
 
 const Landing = () => {
   const [state, dispatch] = useContext(Context)
-  const [open, setOpen] = useState(false)
   
   const handle_fund = (e) => {
     console.log(e.target.value)
@@ -27,6 +26,7 @@ const Landing = () => {
 
   const handle_wager = (e) => {
     console.log(e.target.value)
+    Dispatcher(dispatch, {wager: e.target.value})
   }
 
   const disconnected = () => {
