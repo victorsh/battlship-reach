@@ -108,8 +108,13 @@ ul {
 .dialog-box {
   margin: 0 auto;
   width: 30%;
-  background-color: rgb(100, 100, 100);
+  background-color: rgb(150, 150, 150);
+  border: 3px solid black;
   border-radius: 5px;
+}
+
+.disconnected {
+  padding: 5px;
 }
 
 /* React Generated */

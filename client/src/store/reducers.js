@@ -1,22 +1,23 @@
 import { combineReducers } from 'redux'
-import globals from '../../lib/globals'
+import globals from '../lib/globals'
 
 const initialState = {
   account: null,
   address: null,
-  balance: 0,
   player: null,
-  status: 'connected',
+  balance: 0,
+  status: 'disconnected',
   fundAmount: '',
-  wager: '1',
+  wager: '',
   attachInfo: '',
+  outcome: '',
+  errorMessage: '',
   selectedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
   guessedShips: new Array(globals.CONTRACT_GRID_SIZE).fill(0),
-  outcome: null,
   showCopyAlert: false,
   shipSubmit: false,
   attachingContract: false,
-  errorMessage: ''
+  
 }
 
 const reducer = (state = initialState, action) => {

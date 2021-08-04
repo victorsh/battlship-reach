@@ -1,10 +1,12 @@
 import React, { useEffect, useContext, useState } from 'react'
 import { loadStdlib } from '@reach-sh/stdlib'
 import {
-  useHistory, BrowserRouter, Route, RouteComponentProps, withRouter, Switch, Link, NavLink
+  BrowserRouter, Route, RouteComponentProps, withRouter, Switch, Link, NavLink
 } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import * as actions from '../store/actions'
 
-import { Context, Dispatcher } from '../store/Store'
 import globals from '../lib/globals'
 import '../style/app.css'
 
@@ -19,7 +21,9 @@ import Footer from './layout/Footer'
 import DialogSlide from './common/DialogSlide'
 
 const App = () => {
-  const [state, dispatch] = useContext(Context)
+  const rstate = useSelector((rstate) => rstate)
+  const dispatch = useDispatch()
+  const { appState } = bindActionCreators(actions, dispatch)
 
   // When components mounts and unmounts
   useEffect(async () => {
@@ -38,7 +42,7 @@ const App = () => {
       await reach.setSignStrategy('AlgoSigner')
     }
 
-    Dispatcher(dispatch, {status: 'landing', reach: reach, standardUnit: reach.standardUnit})
+    appState({...rstate.main, status: 'landing', reach: reach, standardUnit: reach.standardUnit})
 
     return () => {
     }

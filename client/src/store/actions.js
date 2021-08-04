@@ -6,3 +6,12 @@ export const appState = (state) => {
     })
   }
 } 
+
+export const status = (val) => {
+  return (dispatch) => {
+    dispatch({
+      type: 'status',
+      payload: val
+    })
+  }
+}

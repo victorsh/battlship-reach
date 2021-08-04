@@ -1,14 +1,18 @@
-import React, { useContext } from 'react'
-import { Context, Dispatcher } from '../../store/Store'
+import React from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import * as actions from '../../store/actions'
 
 const Balance = () => {
-  const [state, dispatch] = useContext(Context)
-
+  const rstate = useSelector((rstate) => rstate)
+  const dispatch = useDispatch()
+  const { appState } = bindActionCreators(actions, dispatch)
+  
   return (
-    state.account !== 'landing' ?
+    rstate.main.account !== 'landing' ?
       <div className="balance">
         <span>Balance</span>
-        <span>{state.balance} {state.standardUnit}</span>
+        <span>{rstate.main.balance} {rstate.main.standardUnit}</span>
       </div>
     : ''
   )

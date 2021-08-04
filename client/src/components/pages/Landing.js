@@ -1,5 +1,10 @@
-import React, { useContext, useState } from 'react'
+import React from 'react'
 import { useHistory } from 'react-router-dom'
+
+import { useSelector, useDispatch } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import * as actions from '../../store/actions'
+
 import {
   Button,
   TextField,
@@ -8,8 +13,6 @@ import {
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Slide
 } from '@material-ui/core'
 
-import { Attacher, Deployer } from '../Players'
-import { Context, Dispatcher } from '../../store/Store'
 import globals from '../../lib/globals'
 
 import connect_account from '../../lib/connect-account'
@@ -17,22 +20,24 @@ import fund_account from '../../lib/fund-account'
 import create_game from '../../lib/create-game'
 
 const Landing = () => {
-  const [state, dispatch] = useContext(Context)
+  const rstate = useSelector((rstate) => rstate)
+  const dispatch = useDispatch()
+  const { appState } = bindActionCreators(actions, dispatch)
   
   const handle_fund = (e) => {
     console.log(e.target.value)
-    Dispatcher(dispatch, {fundAmount: e.target.value})
+    appState({...rstate.main, fundAmount: e.target.value})
   }
 
   const handle_wager = (e) => {
     console.log(e.target.value)
-    Dispatcher(dispatch, {wager: e.target.value})
+    appState({...rstate.main, wager: e.target.value})
   }
 
   const disconnected = () => {
     return (
-      <div id='disconnected'>
-        <Button variant='contained' color='primary' onClick={(e) => connect_account(e, dispatch, state)}>Connect</Button>
+      <div className='disconnected'>
+        <Button variant='contained' color='primary' onClick={async (e) => { await connect_account(e)}}>Connect</Button>
       </div>
     )
   }
@@ -60,8 +65,8 @@ const Landing = () => {
           <>
             <div>Fund Account with Faucet</div>
             <div style={{display: 'flex', justifyContent: 'left'}}>
-              <TextField label='Fund' variant='filled' value={state.fundAmount} onChange={(e) => handle_fund(e)}/>
-              <Button variant='contained' color='primary' onClick={(e) => fund_account(e, dispatch, state)}>Fund</Button>
+              <TextField label='Fund' variant='filled' value={rstate.main.fundAmount} onChange={(e) => handle_fund(e)}/>
+              <Button variant='contained' color='primary' onClick={(e) => fund_account(e)}>Fund</Button>
             </div>
           </> : ''
         }
@@ -69,7 +74,7 @@ const Landing = () => {
         <div>Create New Game</div>
         <div style={{display: 'flex', justifyContent: 'left'}}>
           <TextField label='Wager' variant='filled' onChange={(e) => handle_wager(e)} />
-          <Button variant='contained' color='primary' onClick={(e) => create_game(e, dispatch, state)}>Create</Button>
+          <Button variant='contained' color='primary' onClick={async (e) => { await create_game(e)}}>Create</Button>
         </div>
         
         <div>Join Game by Contract Info</div>
@@ -86,7 +91,7 @@ const Landing = () => {
   }
   return (
     <div id='landing'>
-      {state.status === 'connected' ? connected() : disconnected()}
+      {rstate.main.status === 'connected' ? connected() : disconnected()}
     </div>
   )
 }

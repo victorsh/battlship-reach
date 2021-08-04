@@ -1,34 +1,36 @@
-import { Dispatcher } from '../store/Store'
+import { store } from '../store/store'
 import globals from './globals'
 
-const fund_account = async (e, dispatch, state) => {
+const fund_account = async (e) => {
   e.preventDefault()
 
-  if (isNaN(state.fundAmount)) {
-    alert('Invalid fund input')
-    Dispatcher(dispatch, {fundAmount: ''})
+  const state = store.getState()
+
+  if (isNaN(state.main.fundAmount)) {
+    alert('Invalid fund input', state.main.fundAmount)
+    store.dispatch({type: 'main', payload:{...state.main, fundAmount: ''}})
     return
   }
 
-  if (Number(state.fundAmount) < globals.MIN_VALUE) {
+  if (Number(state.main.fundAmount) < globals.MIN_VALUE) {
     alert('Fund amount must be a value greater than 0')
-    Dispatcher(dispatch, {fundAmount: ''})
+    store.dispatch({type: 'main', payload:{...state.main, fundAmount: ''}})
     return
   }
 
-  Dispatcher(dispatch, {loadingFaucet: true, fundAmount: ''})
+  store.dispatch({type: 'main', payload:{...state.main, loadingFaucet: true}})
   
   try {
-    const faucet = await state.reach.getFaucet()
-    await state.reach.transfer(faucet, state.account, state.reach.parseCurrency(state.fundAmount))
-    let balance = await state.reach.balanceOf(state.account)
-    balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
-    Dispatcher(dispatch, {balance, loadingFaucet: false, fundAmount: ''})
+    const faucet = await state.main.reach.getFaucet()
+    await state.main.reach.transfer(faucet, state.main.account, state.main.reach.parseCurrency(state.main.fundAmount))
+    let balance = await state.main.reach.balanceOf(state.main.account)
+    balance = state.main.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+    store.dispatch({type: 'main', payload:{...state.main, balance, loadingFaucet: false, fundAmount: ''}})
   } catch (e) {
     if (globals.DEBUG) console.log('failed to get faucet: ', e)
-    Dispatcher(dispatch, {loadingFaucet: false, error: e})
+    store.dispatch({type: 'main', payload:{...state.main, loadingFaucet: false, error: e}})
     setTimeout(() => {
-      Dispatcher(dispatch, {error: ''});
+      store.dispatch({type: 'main', payload:{...state.main, error: ''}})
       if (globals.DEBUG) console.log('ERROR TIMEOUT FAUCET')
     }, globals.ERROR_TIMEOUT)
   }

@@ -1,30 +1,31 @@
-import { Dispatcher } from '../store/Store'
 import globals from './globals'
+import { store } from '../store/store'
 
-const connect_account = async (e, dispatch, state) => {
+const connect_account = async (e) => {
   e.preventDefault()
+  const state = store.getState()
 
   try {
-    if (globals.DEBUG) console.log(state.account)
-    if (state.account === null || typeof state.account === 'undefined') {
-      const account = await state.reach.getDefaultAccount()
-      const address = await state.reach.formatAddress(account.getAddress())
+    if (globals.DEBUG) console.log(state.main.account)
+    if (state.main.account === null || typeof state.main.account === 'undefined') {
+      const account = await state.main.reach.getDefaultAccount()
+      const address = await state.main.reach.formatAddress(account.getAddress())
       if (globals.DEBUG) console.log(`Account: ${account}, Address: ${address}`)
 
-      let balance = await state.reach.balanceOf(account)
-      balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+      let balance = await state.main.reach.balanceOf(account)
+      balance = await state.main.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
 
-      Dispatcher(dispatch, {status: 'connected', account, address, balance})
+      await store.dispatch({type: 'main', payload: {...state.main, status: 'connected', account, address, balance}})
     } else {
-      let balance = await state.reach.balanceOf(account)
-      balance = state.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
+      let balance = await state.main.reach.balanceOf(account)
+      balance = await state.main.reach.formatCurrency(balance, globals.CURRENCY_FORMAT)
 
-      Dispatcher(dispatch, {status: 'connected', balance})
+      await store.dispatch({type: 'main', payload: {...state.main, status: 'connected', balance}})
     }
   } catch (e) {
     if (globals.DEBUG) console.log(e)
-    Dispatcher(dispatch, {error: e})
-    setTimeout(() => Dispatcher(dispatch, {error: ''}), globals.ERROR_TIMEOUT)
+    await store.dispatch({type: 'main', payload: {...state.main, error: e}})
+    setTimeout(async () => await store.dispatch({type: 'main', payload: {...state.main, error: ''}}), globals.ERROR_TIMEOUT)
   }
 }
 

@@ -1,48 +1,51 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Button, FormControl, InputGroup } from 'react-bootstrap'
-import { Context } from '../store/Store'
 
 import globals from '../lib/globals'
-import dispatcher from './common/dispatcher'
+import { useSelector, useDispatch } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import * as actions from '../../store/actions'
 
 import Grid from './Grid'
 
-const Game = () => {
-  const [state, dispatch] = useContext(Context)
+const Game = (props) => {
+  const rstate = useSelector((rstate) => rstate)
+  const dispatch = useDispatch()
+  const { appState } = bindActionCreators(actions, dispatch)
 
-  submitSelection = () => {
-    if (globals.DEBUG) console.log(`${state.player} has clicked submitSelection().`)
+  const submitSelection = () => {
+    if (globals.DEBUG) console.log(`${rstate.main.player} has clicked submitSelection().`)
     try {
-      globals.resolveSelectP(state.selectedShips)
-      dispatcher({status: 'submitted-selection', shipSubmit: false}, dispatch)
+      globals.resolveSelectP(rstate.main.selectedShips)
+      appState({...rstate.main, status: 'submitted-selection', shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
-      dispatcher({errorMessage: 'Failed to submit selections, something went wrong :('}, dispatch)
-      this.handleReset()
+      appState({...rstate.main, errorMessage: 'Failed to submit selections, something went wrong :('})
+      handleReset()
     }
   }
-  submitGuess = () => {
+  const submitGuess = () => {
     if (globals.DEBUG) console.log(`${state.player} has clicked submitGuess().`)
     try {
-      globals.resolveGuessP(state.guessedShips)
-      dispatcher({status: 'submitted-guess', shipSubmit: false}, dispatch)
+      globals.resolveGuessP(rstate.main.guessedShips)
+      appState({...rstate.main, status: 'submitted-guess', shipSubmit: false})
     } catch (e) {
       if (globals.DEBUG) console.log(e)
-      dispatcher({errorMessage: 'Failed to submit guesses, something went wrong :('}, dispatch)
+      appState({...rstate.main, errorMessage: 'Failed to submit guesses, something went wrong :('})
       handleReset()
     }
   }
 
-  switch (state.status) {
+  switch (rstate.main.status) {
     case 'player-select-ships': return (
       <>
-        {state.outcome === 1 ? <div className='guide-text'>Draw! Occurring in the previous round</div> : ''}
+        {rstate.main.outcome === 1 ? <div className='guide-text'>Draw! Occurring in the previous round</div> : ''}
         <div className='guide-text'>Select where you would like to place your ships. You must select 3 spaces.</div>
-        <Grid shipSelections={this.shipSelections} type="select" />
+        <Grid shipSelections={props.shipSelections} type="select" />
         <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
           <Button variant='danger' onClick={() => alert('You can\'t go back!')}>Back</Button>
           {state.shipSubmit
-            ? <Button onClick={this.submitSelection}>Submit</Button>
+            ? <Button onClick={submitSelection}>Submit</Button>
             : <Button disabled>Submit</Button>
           }
         </div>
@@ -56,11 +59,11 @@ const Game = () => {
     case 'player-guess-ships': return (
       <>
         <div className='guide-text'>Guess where you think your opponent placed their ships. You must select 3 spaces.</div>
-        <Grid shipSelections={this.shipSelections} type="guess" />
+        <Grid shipSelections={props.shipSelections} type="guess" />
         <div style={{margin: '2vw', width: '20%', display: 'flex', justifyContent: 'space-between'}}>
           <Button variant='danger' onClick={() => alert('You can\'t go back!')}>Back</Button>
           {state.shipSubmit
-            ? <Button onClick={this.submitGuess}>Submit</Button>
+            ? <Button onClick={submitGuess}>Submit</Button>
             : <Button disabled>Submit</Button>
           }
         </div>
