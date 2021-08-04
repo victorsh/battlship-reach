@@ -161,7 +161,7 @@ class App extends React.Component {
     e.preventDefault()
 
     if (globals.DEBUG) console.log('Attaching to contract.')
-    const parsed_info = await JSON.parse(this.state.attachInfo)
+    const parsed_info = JSON.parse(this.state.attachInfo)
     if (globals.DEBUG) console.log(`Contract info: ${parsed_info.toString()}`)
     const ctc = await this.state.account.attach(backend, parsed_info)
     if (globals.DEBUG) console.log('Contract found and attached to backend.')

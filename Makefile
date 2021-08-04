@@ -5,7 +5,7 @@ clean:
 	rm -rf build/*.main.mjs
 
 build/%.main.mjs: %.rsh
-	$(REACH) compile $^ main
+	$(REACH) compile $^
 
 .PHONY: build
 build: build/index.main.mjs
