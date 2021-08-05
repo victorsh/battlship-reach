@@ -1,23 +1,21 @@
-import React from 'react'
-import { connect } from 'react-redux'
-import { appState } from '../store/actions'
 import { store } from '../store/store'
-
-
+import globals from '../lib/globals'
 
 const Player = (Who) => ({
   ...store.getState().main.reach.hasRandom,
   setShips: async () => {
     const state = store.getState()
     console.log('set ships')
+    // store.dispatch({type: 'main', payload: {status: ''}})
+    // history.push('/')
   },
   getShips: async () => {
     const state = store.getState()
-    console.log('get ships')
+    globals.debug ? console.log('get ships') : null
   },
-  seeOutcome: async () => {
+  seeOutcome: async (outcome) => {
     const state = store.getState()
-    console.log('see outcome')
+    console.log('see outcome: ', outcome)
   },
   informTimeout: () => {
     const state = store.getState()
@@ -37,7 +35,6 @@ const Attacher = () => ({
     console.log('accept wager')
   }
 })
-
 
 export {
   Deployer, Attacher

@@ -14,9 +14,11 @@ Battleship written in Reach and React running on the Algorand Blockchain. This p
 
 #### Other Commands
 - Run reach built react client: `REACH_CONNECTOR_MODE=ALGO ./reach react`
+- Run reach: `REACH_CONNECTOR_MODE=ALGO reach run`
 - Run devnet through docker componse: `docker-compose run algorand-devnet`
 - Remove containers after each run: `docker kill $(docker ps -q) && docker rm $(docker ps -qa)`
 - Reach Docker Reset: `reach docker-reset`
+- `./reach upgrade` -> `./reach docker-reset` -> `./reach update`
 
 #### Test Accounts (Local)
 Tacos

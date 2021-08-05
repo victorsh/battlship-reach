@@ -55,8 +55,10 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
     },
     getShips: (res) => {
       console.log('get ships::', Who)
+      console.log(res)
       res.forEach((num) => {
-        console.log(fmt(num))
+        const hex_string = num._hex.toString()
+        console.log(hex_string.substr(3, 1))
       })
     }
   });
@@ -79,6 +81,7 @@ draw_array[0] = draw_array[1] = draw_array[2] = 1;
               console.log(`Attacher being slow`);
               await stdlib.wait(1);
             }
+            console.log(amt)
             console.log(`Attacher accepted the wager of ${fmt(amt)}`);
           }
         }
