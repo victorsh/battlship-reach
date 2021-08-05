@@ -16,7 +16,7 @@
 'reach 0.1';
 
 const GRID_SIZE = 18;
-const DEADLINE = 10;
+const DEADLINE = 5;
 const [ isOutcome, B_WINS, DRAW, A_WINS ] = makeEnum(3);
 
 const winner = (countA, countB) => countA > countB ? A_WINS : countA < countB ? B_WINS : DRAW

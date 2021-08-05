@@ -1,5 +1,5 @@
 import React from 'react'
-import '../style/grid.css'
+import '../style/grid.scss'
 import globals from '../lib/globals'
 
 class Grid extends React.Component {
