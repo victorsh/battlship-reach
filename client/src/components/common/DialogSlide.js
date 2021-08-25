@@ -7,13 +7,25 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Slide from '@material-ui/core/Slide';
 
+import { useSelector, useDispatch } from 'react-redux'
+import { bindActionCreators } from 'redux'
+import * as actions from '../../store/actions'
+import globals from '../../lib/globals'
+
 const DialogSlide = () => {
+  const rstate = useSelector((rstate) => rstate)
+  const dispatch = useDispatch()
+  const { appState } = bindActionCreators(actions, dispatch)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    setTimeout(() => {
-      setOpen(true)
-    }, 1000)
+    const cookieAgreement = localStorage.getItem('cookie-agreements')
+
+    if (typeof cookieAgreement === 'undefined') {
+      setTimeout(() => {
+        setOpen(true)
+      }, 1000)
+    }
   }, [])
 
   const handleAgree = (e, choice) => {

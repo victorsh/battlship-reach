@@ -34,14 +34,7 @@ var config = {
       },
       {
         test: /\.s[ac]ss$/i,
-        use: [
-          // Creates `style` nodes from JS strings
-          "style-loader",
-          // Translates CSS into CommonJS
-          "css-loader",
-          // Compiles Sass to CSS
-          "sass-loader",
-        ],
+        use: ['style-loader', 'css-loader', 'sass-loader']
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
@@ -72,14 +65,4 @@ var config = {
   ],
 }
 
-module.exports = (env, argv) => {
-  if (argv.mode === 'development') {
-    config.devtool = 'source-map'
-  }
-
-  if (argv.mode === 'production') {
-    //
-  }
-
-  return config
-}
+module.exports = config

@@ -1,6 +1,6 @@
 # Battleship :ship:
 
-Battleship written in Reach and React running on the Algorand Blockchain. This project has been created to compete with the Universities Unchained Hackathon.
+Battleship written in Reach and React running on the Algorand Blockchain.
 
 ---
 
@@ -32,3 +32,10 @@ maximum anchor bulk upon jar design fog sting weird boil guilt cook fabric mail 
 #### Sources
 - A single participant example showcasing [array_groups](https://github.com/reach-sh/reach-lang/blob/8f41a2ae17220041ba365274dd32ae7c96b11f2e/hs/test-examples/features/array_groups.rsh)
 
+
+#### Todo
+- [] Simultaneous play with ParallelReduce?
+- [] ESlint, Localization
+- [] Persistent Contracts / Tokens
+- [] Manage games by storing games in IPFS
+- [] Allow users to get back to their last position after disconnect

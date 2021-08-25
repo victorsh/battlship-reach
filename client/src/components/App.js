@@ -8,7 +8,6 @@ import { bindActionCreators } from 'redux'
 import * as actions from '../store/actions'
 
 import globals from '../lib/globals'
-import '../style/app.scss'
 
 import Landing from './pages/Landing'
 import Game from './pages/Game'
